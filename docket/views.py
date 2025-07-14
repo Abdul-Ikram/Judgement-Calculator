@@ -8,6 +8,11 @@ from django.utils import timezone
 from rest_framework.generics import ListAPIView
 from .serializers import CaseCreateSerializer, CaseListSerializer, TransactionCreateSerializer, TransactionDetailSerializer, TransactionUpdateSerializer
 from django.db import transaction as db_transaction
+from django.template.loader import render_to_string
+from django.http import HttpResponse
+from weasyprint import HTML
+from .models import CaseDetails
+from django.utils.timezone import now
 
 
 class AddCaseView(APIView):
@@ -214,3 +219,36 @@ class UpdateTransactionView(APIView):
             'message': 'Invalid input.',
             'errors': serializer.errors
         }, status=status.HTTP_400_BAD_REQUEST)
+
+
+class GeneratePayoffPDFView(APIView):
+    def get(self, request, case_id):
+        try:
+            case = CaseDetails.objects.get(id=case_id, user=request.user)
+        except CaseDetails.DoesNotExist:
+            return HttpResponse("Case not found.", status=404)
+
+        transactions = case.transactions.all().order_by('date')
+        daily_interest = case.judgment_amount * (case.interest_rate / 100) / 365
+
+        html_string = render_to_string('docket/payoff_statement.html', {
+            'case': case,
+            'transactions': transactions,
+            'daily_interest': f"{daily_interest:.2f}",
+            'interest_start_date': now().date(),
+            'today': now().date(),
+            'lawyer': {
+                'name': 'John A. Smith, Esq.',
+                'firm': 'Smith Jones & Kaplan LLP',
+                'address': '201 South Figueroa Street 15th Floor',
+                'city_state_zip': 'Los Angeles California 90012',
+                'phone': '(213) 555-5200',
+                'email': 'jsmith@sjkllp.law',
+                'date': now().strftime('%B %d, %Y')
+            }
+        })
+
+        pdf = HTML(string=html_string).write_pdf()
+        response = HttpResponse(pdf, content_type='application/pdf')
+        response['Content-Disposition'] = f'attachment; filename=payoff_statement_case_{case_id}.pdf'
+        return response
