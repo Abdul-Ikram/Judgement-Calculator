@@ -15,7 +15,7 @@ from rest_framework import status
 from rest_framework.response import Response
 from django.core.validators import validate_email
 # from .helpers import generate_otp, send_email
-from .helpers import send_email, generate_unique_phone, get_tokens_for_user
+from .helpers import send_email, generate_unique_phone, get_tokens_for_user, upload_to_imagekit
 from .serializers import RegisterSerializer, PasswordResetConfirmSerializer
 from django.utils import timezone
 from rest_framework.throttling import UserRateThrottle
@@ -328,3 +328,55 @@ class PasswordResetConfirmView(APIView):
             "message": "Invalid input. Please check the provided data.",
             "errors": serializer.errors
         }, status=status.HTTP_400_BAD_REQUEST)
+
+
+class ProfileUpdateView(APIView):
+    def put(self, request, *args, **kwargs):
+        user = request.user
+
+        full_name = request.data.get('full_name', user.full_name)
+        location = request.data.get('location', user.location)
+        phone_number = request.data.get('phone_number', user.phone_number)
+        website = request.data.get('website', user.website)
+        company = request.data.get('company', user.company)
+        image_file = request.FILES.get('image', None)
+
+        try:
+            # Image update
+            if image_file:
+                user.image = upload_to_imagekit(image_file)
+            elif request.data.get('image') == '':
+                user.image = None
+                # user.image = user.image
+
+            # Update profile fields
+            user.full_name = full_name
+            user.location = location
+            user.phone_number = phone_number
+            user.website = website
+            user.company = company
+            user.save()
+
+            return Response({
+                'success': True,
+                'message': 'Profile updated successfully.',
+                'data': {
+                    'user': {
+                        'id': user.id,
+                        'full_name': user.full_name,
+                        'email': user.email,
+                        'location': user.location,
+                        'company': user.company,
+                        'phone_number': user.phone_number,
+                        'website': user.website,
+                        'image': user.image if user.image else None,
+                    }
+                }
+            }, status=status.HTTP_200_OK)
+
+        except Exception as e:
+            return Response({
+                'success': False,
+                'message': f'Error updating profile: {str(e)}'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        

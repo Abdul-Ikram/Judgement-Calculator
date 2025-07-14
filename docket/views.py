@@ -13,6 +13,7 @@ from django.http import HttpResponse
 from weasyprint import HTML
 from .models import CaseDetails
 from django.utils.timezone import now
+from django.shortcuts import get_object_or_404
 
 
 class AddCaseView(APIView):
@@ -252,3 +253,28 @@ class GeneratePayoffPDFView(APIView):
         response = HttpResponse(pdf, content_type='application/pdf')
         response['Content-Disposition'] = f'attachment; filename=payoff_statement_case_{case_id}.pdf'
         return response
+    
+
+class DeleteCaseView(APIView):
+    def delete(self, request, case_id):
+        case = get_object_or_404(CaseDetails, id=case_id, user=request.user, is_active=True)
+
+        # Soft delete the case
+        case.is_active = False
+        case.deleted_at = timezone.now()
+        case.deleted_by = request.user.email
+        case.save()
+
+        # Delete all related transactions
+        # Transaction.objects.filter(case=case).delete()
+        Transaction.objects.filter(case=case).update(
+            is_active=False,
+            deleted_at=timezone.now(),
+            deleted_by=request.user.email
+        )
+
+        return Response({
+            "success": True,
+            "message": f"Case '{case.case_name}' and its related transactions have been deleted successfully."
+        }, status=status.HTTP_200_OK)
+
