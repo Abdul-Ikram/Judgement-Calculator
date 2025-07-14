@@ -92,7 +92,6 @@ def send_email(user, email_type, otp=None):
 
 def upload_to_imagekit(image_file):
     imagekit_api_key = os.getenv("IMAGEKIT_PRIVATE_KEY")
-    print(imagekit_api_key)
     if not imagekit_api_key:
         raise RuntimeError("Missing ImageKit private key in env var")
     upload_url = "https://upload.imagekit.io/api/v1/files/upload"

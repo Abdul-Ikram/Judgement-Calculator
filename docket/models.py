@@ -48,6 +48,7 @@ class Transaction(models.Model):
     description = models.TextField(null=True, blank=True)
 
     date = models.DateField(default=timezone.now)
+    is_active = models.BooleanField(default=True, null=False, blank=False)
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
