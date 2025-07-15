@@ -1,13 +1,18 @@
 {
-  "builds": [{
-    "src": "judgement_portal/wsgi.py",
-    "use": "@vercel/python",
-    "config": { "maxLambdaSize": "15mb", "runtime": "python3.10" }
-  }],
+  "builds": [
+    {
+      "src": "api/index.py",
+      "use": "@vercel/python"
+    }
+  ],
   "routes": [
     {
+      "src": "/static/(.*)",
+      "dest": "staticfiles/$1"
+    },
+    {
       "src": "/(.*)",
-      "dest": "judgement_portal/wsgi.py"
+      "dest": "api/index.py"
     }
   ]
 }

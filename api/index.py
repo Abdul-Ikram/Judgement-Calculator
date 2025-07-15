@@ -1,0 +1,1 @@
+from judgement_portal.wsgi import application as app
