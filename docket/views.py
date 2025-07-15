@@ -92,7 +92,14 @@ class CaseListView(ListAPIView):
 
     def get_queryset(self):
         # Return only active cases for the authenticated user
-        return CaseDetails.objects.filter(user=self.request.user, is_active=True).order_by('-created_at')
+        # return CaseDetails.objects.filter(user=self.request.user, is_active=True).order_by('-created_at')
+        return Response({
+            'status_code': 200,
+            'message': 'List of Cases.',
+            'data': {
+                CaseDetails.objects.filter(user=self.request.user, is_active=True).order_by('-created_at')
+            }
+        }, status=status.HTTP_201_CREATED)
 
 
 class CreateTransactionView(APIView):
@@ -264,7 +271,6 @@ class GeneratePayoffPDFView(APIView):
         response = HttpResponse(pdf_file, content_type='application/pdf')
         response['Content-Disposition'] = f'attachment; filename=payoff_statement_case_{case_id}.pdf'
         return response
-
     
 
 class DeleteCaseView(APIView):
@@ -290,3 +296,30 @@ class DeleteCaseView(APIView):
             "message": f"Case '{case.case_name}' and its related transactions have been deleted successfully."
         }, status=status.HTTP_200_OK)
 
+
+class DownloadCaseTransactionsPDF(APIView):
+    def get(self, request, case_id):
+        try:
+            case = CaseDetails.objects.get(id=case_id, user=request.user)
+            transactions = case.transactions.all().order_by('date')
+
+            template_path = 'docket/case_transactions_pdf.html'
+            context = {
+                'case': case,
+                'transactions': transactions
+            }
+
+            template = get_template(template_path)
+            html = template.render(context)
+
+            response = HttpResponse(content_type='application/pdf')
+            response['Content-Disposition'] = f'attachment; filename=case_{case_id}_transactions.pdf'
+
+            pisa_status = pisa.CreatePDF(html, dest=response)
+
+            if pisa_status.err:
+                return HttpResponse('We had some errors generating the PDF', status=500)
+            return response
+
+        except CaseDetails.DoesNotExist:
+            return HttpResponse("Case not found", status=404)

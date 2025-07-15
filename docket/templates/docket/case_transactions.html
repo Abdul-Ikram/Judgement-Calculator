@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Case Transactions</title>
+    <style>
+        body { font-family: DejaVu Sans, sans-serif; font-size: 12px; }
+        h1 { text-align: center; margin-bottom: 20px; }
+        table {
+            width: 100%; border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            padding: 8px; border: 1px solid #000;
+            text-align: center;
+        }
+        th {
+            background-color: #eee;
+        }
+    </style>
+</head>
+<body>
+    <h1>Transaction Details</h1>
+    <p><strong>Case:</strong> {{ case.case_name }} ({{ case.court_case_number }})</p>
+    <p><strong>Judgment Amount:</strong> ${{ case.judgment_amount }}</p>
+    <p><strong>Judgment Date:</strong> {{ case.judgment_date }}</p>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Date</th>
+                <th>Type</th>
+                <th>Amount</th>
+                <th>Accrued Interest</th>
+                <th>Principal Balance</th>
+                <th>Description</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for txn in transactions %}
+            <tr>
+                <td>{{ txn.date }}</td>
+                <td>{{ txn.transaction_type }}</td>
+                <td>${{ txn.amount }}</td>
+                <td>${{ txn.accrued_interest }}</td>
+                <td>${{ txn.principal_balance }}</td>
+                <td>{{ txn.description }}</td>
+            </tr>
+        {% empty %}
+            <tr><td colspan="6">No transactions available</td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</body>
+</html>
