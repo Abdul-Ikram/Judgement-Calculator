@@ -40,6 +40,7 @@ class AddCaseView(APIView):
                         total_payments=data.get('principal_reduction', Decimal('0.00')),
                         accrued_interest=data['total_interest'],
                         payoff_amount=data['grand_total_amount'],
+                        debtor_info=data['debtor_info'],
                         last_payment_date=data['judgment_date'] if 'principal_reduction' in data else None,
                     )
 

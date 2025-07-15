@@ -22,7 +22,8 @@ class CaseCreateSerializer(serializers.ModelSerializer):
             'principal_reduction',
             'costs_after_judgment',
             'total_interest',
-            'grand_total_amount'
+            'grand_total_amount',
+            'debtor_info',
         ]
 
     def validate(self, data):

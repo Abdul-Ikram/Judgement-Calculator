@@ -18,6 +18,7 @@ class CaseDetails(models.Model):
     total_payments = models.DecimalField(max_digits=12, decimal_places=2, default=Decimal('0.00'))
     accrued_interest = models.DecimalField(max_digits=12, decimal_places=2, default=Decimal('0.00'))
     payoff_amount = models.DecimalField(max_digits=12, decimal_places=2, default=Decimal('0.00'))
+    debtor_info = models.TextField(null=True, blank=True)
 
     is_active = models.BooleanField(default=True)
     deleted_at = models.DateTimeField(null=True, blank=True)
