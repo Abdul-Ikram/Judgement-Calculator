@@ -88,18 +88,28 @@ class AddCaseView(APIView):
 
 
 class CaseListView(ListAPIView):
-    serializer_class = CaseListSerializer
+    serializer_class   = CaseListSerializer
 
     def get_queryset(self):
         # Return only active cases for the authenticated user
-        # return CaseDetails.objects.filter(user=self.request.user, is_active=True).order_by('-created_at')
+        return CaseDetails.objects.filter(
+            user=self.request.user,
+            is_active=True
+        ).order_by('-created_at')
+
+    def list(self, request, *args, **kwargs):
+        """
+        Override the default list() to wrap the serialized data
+        in your custom envelope.
+        """
+        queryset = self.get_queryset()
+        serializer = self.get_serializer(queryset, many=True)
+
         return Response({
             'status_code': 200,
             'message': 'List of Cases.',
-            'data': {
-                CaseDetails.objects.filter(user=self.request.user, is_active=True).order_by('-created_at')
-            }
-        }, status=status.HTTP_201_CREATED)
+            'data': serializer.data
+        }, status=status.HTTP_200_OK)
 
 
 class CreateTransactionView(APIView):
