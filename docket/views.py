@@ -10,10 +10,12 @@ from .serializers import CaseCreateSerializer, CaseListSerializer, TransactionCr
 from django.db import transaction as db_transaction
 from django.template.loader import render_to_string
 from django.http import HttpResponse
-from weasyprint import HTML
+# from weasyprint import HTML
 from .models import CaseDetails
 from django.utils.timezone import now
 from django.shortcuts import get_object_or_404
+from xhtml2pdf import pisa
+from io import BytesIO
 
 
 class AddCaseView(APIView):
@@ -232,6 +234,7 @@ class GeneratePayoffPDFView(APIView):
         transactions = case.transactions.all().order_by('date')
         daily_interest = case.judgment_amount * (case.interest_rate / 100) / 365
 
+        # Create HTML from template
         html_string = render_to_string('docket/payoff_statement.html', {
             'case': case,
             'transactions': transactions,
@@ -249,10 +252,18 @@ class GeneratePayoffPDFView(APIView):
             }
         })
 
-        pdf = HTML(string=html_string).write_pdf()
-        response = HttpResponse(pdf, content_type='application/pdf')
+        # Convert HTML to PDF
+        pdf_file = BytesIO()
+        pisa_status = pisa.CreatePDF(src=html_string, dest=pdf_file)
+
+        if pisa_status.err:
+            return HttpResponse('Failed to generate PDF', status=500)
+
+        pdf_file.seek(0)
+        response = HttpResponse(pdf_file, content_type='application/pdf')
         response['Content-Disposition'] = f'attachment; filename=payoff_statement_case_{case_id}.pdf'
         return response
+
     
 
 class DeleteCaseView(APIView):
