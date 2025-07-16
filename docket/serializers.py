@@ -31,9 +31,14 @@ class CaseCreateSerializer(serializers.ModelSerializer):
 
 
 class CaseListSerializer(serializers.ModelSerializer):
+    caseName = serializers.CharField(source='case_name')
+    courtName = serializers.CharField(source='court_name')
+    courtCaseNumber = serializers.CharField(source='court_case_number')
+    payoffAmount = serializers.DecimalField(source='payoff_amount', max_digits=12, decimal_places=2)
+
     class Meta:
         model = CaseDetails
-        fields = ['id', 'case_name', 'court_name', 'court_case_number', 'payoff_amount']
+        fields = ['id', 'caseName', 'courtName', 'courtCaseNumber', 'payoffAmount']
 
 
 class TransactionCreateSerializer(serializers.Serializer):
