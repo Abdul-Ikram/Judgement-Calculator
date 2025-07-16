@@ -6,7 +6,7 @@ from .models import CaseDetails, Transaction
 from decimal import Decimal
 from django.utils import timezone
 from rest_framework.generics import ListAPIView
-from .serializers import CaseCreateSerializer, CaseListSerializer, TransactionCreateSerializer, TransactionDetailSerializer, TransactionUpdateSerializer
+from .serializers import CaseCreateSerializer, CaseListSerializer, TransactionCreateSerializer, TransactionDetailSerializer, TransactionUpdateSerializer, CaseDetailSerializer
 from django.db import transaction as db_transaction
 from django.template.loader import render_to_string
 from django.http import HttpResponse
@@ -108,6 +108,18 @@ class CaseListView(ListAPIView):
         return Response({
             'status_code': 200,
             'message': 'List of Cases.',
+            'data': serializer.data
+        }, status=status.HTTP_200_OK)
+
+
+class CaseDetailView(APIView):
+    def get(self, request, case_id):
+        case = get_object_or_404(CaseDetails, id=case_id, user=request.user, is_active=True)
+        serializer = CaseDetailSerializer(case)
+
+        return Response({
+            'status_code': 200,
+            'message': 'Case details retrieved successfully.',
             'data': serializer.data
         }, status=status.HTTP_200_OK)
 
