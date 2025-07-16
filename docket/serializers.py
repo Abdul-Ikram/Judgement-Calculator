@@ -44,11 +44,33 @@ class CaseDetailSerializer(serializers.ModelSerializer):
     caseName = serializers.CharField(source='case_name')
     courtName = serializers.CharField(source='court_name')
     courtCaseNumber = serializers.CharField(source='court_case_number')
+    judgmentAmount = serializers.DecimalField(source='judgment_amount', max_digits=12, decimal_places=2)
+    judgmentDate = serializers.DateField(source='judgment_date')
+    lastPaymentDate = serializers.DateField(source='last_payment_date', allow_null=True)
+    totalPayments = serializers.DecimalField(source='total_payments', max_digits=12, decimal_places=2)
+    accruedInterest = serializers.DecimalField(source='accrued_interest', max_digits=12, decimal_places=2)
+    principalBalance = serializers.SerializerMethodField()
     payoffAmount = serializers.DecimalField(source='payoff_amount', max_digits=12, decimal_places=2)
 
     class Meta:
         model = CaseDetails
-        fields = ['id', 'caseName', 'courtName', 'courtCaseNumber', 'payoffAmount']
+        fields = [
+            'id',
+            'caseName',
+            'courtName',
+            'courtCaseNumber',
+            'judgmentAmount',
+            'judgmentDate',
+            'lastPaymentDate',
+            'totalPayments',
+            'accruedInterest',
+            'principalBalance',
+            'payoffAmount',
+        ]
+
+    def get_principalBalance(self, obj):
+        # Principal = judgment_amount - total_payments
+        return obj.judgment_amount - obj.total_payments
 
 class TransactionCreateSerializer(serializers.Serializer):
     case_id = serializers.IntegerField()
