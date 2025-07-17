@@ -10,4 +10,5 @@ urlpatterns = [
     path('transactions/<int:transaction_id>/update/', UpdateTransactionView.as_view(), name='update-transaction'),
     path('cases/<int:case_id>/payoff-statement/', GeneratePayoffPDFView.as_view(), name='generate-payoff-pdf'),
     path('cases/<int:case_id>/delete/', DeleteCaseView.as_view(), name='delete-case'),
+    path('transactions/<int:transaction_id>/delete/', DeleteTransactionView.as_view(), name='delete-transaction'),
 ]
