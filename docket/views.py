@@ -186,7 +186,11 @@ class TransactionListByCaseView(ListAPIView):
         if not case:
             return Transaction.objects.none()
 
-        return Transaction.objects.filter(case=case).order_by('-date')
+        return Transaction.objects.filter(
+            case__id=case_id,
+            case__user=self.request.user,
+            is_active=True
+        ).order_by('-date')
 
     def list(self, request, *args, **kwargs):
         queryset = self.get_queryset()
@@ -345,3 +349,24 @@ class DownloadCaseTransactionsPDF(APIView):
 
         except CaseDetails.DoesNotExist:
             return HttpResponse("Case not found", status=404)
+
+
+class DeleteTransactionView(APIView):
+    def delete(self, request, transaction_id):
+        transaction = get_object_or_404(Transaction, id=transaction_id)
+
+        # Ensure only the owner of the related case can delete
+        if transaction.case.user != request.user:
+            return Response({
+                "status_code": 403,
+                "message": "You are not authorized to delete this transaction."
+            }, status=status.HTTP_403_FORBIDDEN)
+
+        # Soft delete the transaction
+        transaction.is_active = False
+        transaction.save()
+
+        return Response({
+            "status_code": 200,
+            "message": "Transaction deleted successfully (soft delete)."
+        }, status=status.HTTP_200_OK)
