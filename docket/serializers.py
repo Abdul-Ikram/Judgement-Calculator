@@ -87,19 +87,40 @@ class TransactionCreateSerializer(serializers.Serializer):
         return value
     
 
+# class TransactionDetailSerializer(serializers.ModelSerializer):
+#     class Meta:
+#         model = Transaction
+#         fields = [
+#             'id',
+#             'date',
+#             'transaction_type',
+#             'amount',
+#             'accrued_interest',
+#             'principal_balance',
+#             'description',
+#         ]
+
 class TransactionDetailSerializer(serializers.ModelSerializer):
+    type = serializers.CharField(source='transaction_type')
+    interestRate = serializers.SerializerMethodField()
+    calculatedInterest = serializers.DecimalField(source='accrued_interest', max_digits=12, decimal_places=2)
+    newBalance = serializers.DecimalField(source='principal_balance', max_digits=12, decimal_places=2)
+
     class Meta:
         model = Transaction
         fields = [
-            'id',
-            'date',
-            'transaction_type',
+            'type',
             'amount',
-            'accrued_interest',
-            'principal_balance',
+            'date',
             'description',
+            'interestRate',
+            'calculatedInterest',
+            'newBalance',
         ]
 
+    def get_interestRate(self, obj):
+        # Access interest rate from related CaseDetails
+        return float(obj.case.interest_rate)
 
 class TransactionUpdateSerializer(serializers.ModelSerializer):
     new_balance = serializers.DecimalField(max_digits=12, decimal_places=2)
