@@ -89,5 +89,6 @@ class UserProfileSerializer(serializers.ModelSerializer):
             'phone_number',
             'website',
             'subscription_plan',
-            'member_since'
+            'member_since',
+            'image'
         ]
