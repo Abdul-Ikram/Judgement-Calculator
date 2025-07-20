@@ -16,7 +16,7 @@ from rest_framework.response import Response
 from django.core.validators import validate_email
 # from .helpers import generate_otp, send_email
 from .helpers import send_email, generate_unique_phone, get_tokens_for_user, upload_to_imagekit
-from .serializers import RegisterSerializer, PasswordResetConfirmSerializer
+from .serializers import RegisterSerializer, PasswordResetConfirmSerializer, UserProfileSerializer
 from django.utils import timezone
 from rest_framework.throttling import UserRateThrottle
 
@@ -380,3 +380,13 @@ class ProfileUpdateView(APIView):
                 'message': f'Error updating profile: {str(e)}'
             }, status=status.HTTP_400_BAD_REQUEST)
         
+
+class GetProfileView(APIView):
+    def get(self, request):
+        user = request.user
+        serializer = UserProfileSerializer(user)
+        return Response({
+            "status_code": 200,
+            "message": "Profile fetched successfully.",
+            "profile": serializer.data
+        }, status=status.HTTP_200_OK)

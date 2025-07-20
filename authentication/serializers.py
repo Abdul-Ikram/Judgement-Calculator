@@ -74,3 +74,20 @@ class PasswordResetConfirmSerializer(serializers.ModelSerializer):
         password_reset.save()
 
         return user
+
+class UserProfileSerializer(serializers.ModelSerializer):
+    subscription_plan = serializers.CharField(source='payment_status')
+    member_since = serializers.DateTimeField(source='created_at', format='%Y-%m-%d')
+
+    class Meta:
+        model = User
+        fields = [
+            'full_name',
+            'email',
+            'company',
+            'location',
+            'phone_number',
+            'website',
+            'subscription_plan',
+            'member_since'
+        ]
