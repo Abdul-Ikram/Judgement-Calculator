@@ -24,10 +24,22 @@ class AddCaseView(APIView):
     def post(self, request):
         serializer = CaseCreateSerializer(data=request.data)
         if serializer.is_valid():
+            user = request.user
+            data = serializer.validated_data
+
+            if CaseDetails.objects.filter(
+                user=user,
+                case_name=data['caseName'],
+                court_case_number=data['courtCaseNumber'],
+                is_active=True
+            ).exists():
+                return Response({
+                    "status_code": 409,
+                    "message": "A case with this name and court case number already exists."
+                }, status=status.HTTP_409_CONFLICT)
+
             try:
                 with transaction.atomic():
-                    user = request.user
-                    data = serializer.validated_data
 
                     case = CaseDetails.objects.create(
                         user=user,
