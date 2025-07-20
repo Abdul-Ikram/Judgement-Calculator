@@ -31,38 +31,29 @@ class AddCaseView(APIView):
 
                     case = CaseDetails.objects.create(
                         user=user,
-                        case_name=data['case_name'],
-                        court_name=data['court_name'],
-                        court_case_number=data['court_case_number'],
-                        judgment_amount=data['judgment_amount'],
-                        interest_rate=data['interest_rate'],
-                        judgment_date=data['judgment_date'],
-                        total_payments=data.get('principal_reduction', Decimal('0.00')),
-                        accrued_interest=data['total_interest'],
-                        payoff_amount=data['grand_total_amount'],
-                        debtor_info=data['debtor_info'],
-                        last_payment_date=data['judgment_date'] if 'principal_reduction' in data else None,
+                        case_name=data['caseName'],
+                        court_name=data['courtName'],
+                        court_case_number=data['courtCaseNumber'],
+                        judgment_amount=data['judgmentAmount'],
+                        interest_rate=data['interestRate'],
+                        judgment_date=data['judgmentDate'],
+                        total_payments=data['totalPayments'],
+                        accrued_interest=data['accruedInterest'],
+                        payoff_amount=data['payoffAmount'],
+                        debtor_info=data.get('debtorInfo', ''),
+                        last_payment_date=data.get('lastPaymentDate'),
+                        is_ended=data.get('isEnded', False)
                     )
 
-                    # Save transactions if provided
-                    if 'principal_reduction' in data:
+                    # Add initial transactions if relevant
+                    if data['totalPayments'] > 0:
                         Transaction.objects.create(
                             case=case,
                             transaction_type='PAYMENT',
-                            amount=data['principal_reduction'],
-                            principal_balance=case.payoff_amount,
-                            accrued_interest=data['total_interest'],
-                            date=timezone.now()
-                        )
-
-                    if 'costs_after_judgment' in data:
-                        Transaction.objects.create(
-                            case=case,
-                            transaction_type='COST',
-                            amount=data['costs_after_judgment'],
-                            principal_balance=case.payoff_amount,
-                            accrued_interest=data['total_interest'],
-                            date=timezone.now()
+                            amount=data['totalPayments'],
+                            principal_balance=data['principalBalance'],
+                            accrued_interest=data['accruedInterest'],
+                            date=data.get('lastPaymentDate') or timezone.now()
                         )
 
                     return Response({

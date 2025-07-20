@@ -21,6 +21,7 @@ class CaseDetails(models.Model):
     debtor_info = models.TextField(null=True, blank=True)
 
     is_active = models.BooleanField(default=True)
+    is_ended = models.BooleanField(default=False)
     deleted_at = models.DateTimeField(null=True, blank=True)
     deleted_by = models.CharField(max_length=255, blank=True, null=True)
 

@@ -4,26 +4,36 @@ from decimal import Decimal
 
 
 class CaseCreateSerializer(serializers.ModelSerializer):
-    # Frontend-named fields
-    principal_reduction = serializers.DecimalField(max_digits=12, decimal_places=2, required=False)
-    costs_after_judgment = serializers.DecimalField(max_digits=12, decimal_places=2, required=False)
-    total_interest = serializers.DecimalField(max_digits=12, decimal_places=2)
-    grand_total_amount = serializers.DecimalField(max_digits=12, decimal_places=2)
+    caseName = serializers.CharField()
+    courtName = serializers.CharField()
+    courtCaseNumber = serializers.CharField()
+    judgmentAmount = serializers.DecimalField(max_digits=12, decimal_places=2)
+    judgmentDate = serializers.DateField()
+    lastPaymentDate = serializers.DateField(required=False)
+    totalPayments = serializers.DecimalField(max_digits=12, decimal_places=2)
+    accruedInterest = serializers.DecimalField(max_digits=12, decimal_places=2)
+    principalBalance = serializers.DecimalField(max_digits=12, decimal_places=2)
+    payoffAmount = serializers.DecimalField(max_digits=12, decimal_places=2)
+    interestRate = serializers.DecimalField(max_digits=5, decimal_places=2)
+    isEnded = serializers.BooleanField(required=False)
+    debtorInfo = serializers.CharField(required=False, allow_blank=True)
 
     class Meta:
         model = CaseDetails
         fields = [
-            'case_name',
-            'court_name',
-            'court_case_number',
-            'judgment_amount',
-            'interest_rate',
-            'judgment_date',
-            'principal_reduction',
-            'costs_after_judgment',
-            'total_interest',
-            'grand_total_amount',
-            'debtor_info',
+            'caseName',
+            'courtName',
+            'courtCaseNumber',
+            'judgmentAmount',
+            'judgmentDate',
+            'lastPaymentDate',
+            'totalPayments',
+            'accruedInterest',
+            'principalBalance',
+            'payoffAmount',
+            'interestRate',
+            'isEnded',
+            'debtorInfo'
         ]
 
     def validate(self, data):
