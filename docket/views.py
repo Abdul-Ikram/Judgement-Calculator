@@ -68,7 +68,8 @@ class AddCaseView(APIView):
             except Exception as e:
                 return Response({
                     'status_code': 500,
-                    'message': f'Error creating case: {str(e)}'
+                    'message': f'Internal Server Error'
+                    # 'message': f'Error creating case: {str(e)}'
                 }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
         return Response({
@@ -156,7 +157,8 @@ class CreateTransactionView(APIView):
             except Exception as e:
                 return Response({
                     'status_code': 500,
-                    'message': f"An error occurred: {str(e)}"
+                    # 'message': f"An error occurred: {str(e)}"
+                    'message': f'Internal Server Error'
                 }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
         return Response({
