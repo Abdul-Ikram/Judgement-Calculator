@@ -180,6 +180,38 @@ class CreateTransactionView(APIView):
         }, status=status.HTTP_400_BAD_REQUEST)
 
 
+# class TransactionListByCaseView(ListAPIView):
+#     serializer_class = TransactionDetailSerializer
+
+#     def get_queryset(self):
+#         case_id = self.kwargs.get('case_id')
+
+#         # Ensure user owns this case
+#         case = CaseDetails.objects.filter(id=case_id, user=self.request.user, is_active=True).first()
+#         if not case:
+#             return Transaction.objects.none()
+
+#         return Transaction.objects.filter(
+#             case__id=case_id,
+#             case__user=self.request.user,
+#             is_active=True
+#         ).order_by('-date')
+
+#     def list(self, request, *args, **kwargs):
+#         queryset = self.get_queryset()
+#         if not queryset.exists():
+#             return Response({
+#                 "status_code": 404,
+#                 "message": "No transactions found or case not accessible."
+#             }, status=status.HTTP_404_NOT_FOUND)
+
+#         serializer = self.get_serializer(queryset, many=True)
+#         return Response({
+#             "status_code": 200,
+#             "message": "Transactions retrieved successfully.",
+#             "transactions": serializer.data
+#         }, status=status.HTTP_200_OK)
+
 class TransactionListByCaseView(ListAPIView):
     serializer_class = TransactionDetailSerializer
 
@@ -199,19 +231,12 @@ class TransactionListByCaseView(ListAPIView):
 
     def list(self, request, *args, **kwargs):
         queryset = self.get_queryset()
-        if not queryset.exists():
-            return Response({
-                "status_code": 404,
-                "message": "No transactions found or case not accessible."
-            }, status=status.HTTP_404_NOT_FOUND)
-
         serializer = self.get_serializer(queryset, many=True)
         return Response({
             "status_code": 200,
             "message": "Transactions retrieved successfully.",
-            "transactions": serializer.data
+            "transactions": serializer.data  # could be empty list []
         }, status=status.HTTP_200_OK)
-
 
 class UpdateTransactionView(APIView):
     permission_classes = [permissions.IsAuthenticated]
