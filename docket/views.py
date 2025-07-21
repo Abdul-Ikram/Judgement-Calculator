@@ -16,6 +16,7 @@ from django.utils.timezone import now
 from django.shortcuts import get_object_or_404
 from xhtml2pdf import pisa
 from io import BytesIO
+from django.template.loader import get_template
 
 
 class AddCaseView(APIView):
@@ -359,7 +360,7 @@ class DownloadCaseTransactionsPDF(APIView):
             case = CaseDetails.objects.get(id=case_id, user=request.user)
             transactions = case.transactions.all().order_by('date')
 
-            template_path = 'docket/case_transactions_pdf.html'
+            template_path = 'docket/case_transactions.html'
             context = {
                 'case': case,
                 'transactions': transactions
