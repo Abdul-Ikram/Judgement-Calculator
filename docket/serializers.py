@@ -21,6 +21,7 @@ class CaseCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = CaseDetails
         fields = [
+            'id',
             'caseName',
             'courtName',
             'courtCaseNumber',
@@ -119,6 +120,7 @@ class TransactionDetailSerializer(serializers.ModelSerializer):
     class Meta:
         model = Transaction
         fields = [
+            'id',
             'type',
             'amount',
             'date',
