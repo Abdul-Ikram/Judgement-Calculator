@@ -358,7 +358,8 @@ class DownloadCaseTransactionsPDF(APIView):
     def get(self, request, case_id):
         try:
             case = CaseDetails.objects.get(id=case_id, user=request.user)
-            transactions = case.transactions.all().order_by('date')
+            transactions = case.transactions.filter(is_active=True).order_by('date')
+            # transactions = case.transactions.all().order_by('date')
 
             template_path = 'docket/case_transactions.html'
             context = {
