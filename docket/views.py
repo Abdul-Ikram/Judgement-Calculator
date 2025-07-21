@@ -296,7 +296,8 @@ class GeneratePayoffPDFView(APIView):
         except CaseDetails.DoesNotExist:
             return HttpResponse("Case not found.", status=404)
 
-        transactions = case.transactions.all().order_by('date')
+        # transactions = case.transactions.all().order_by('date')
+        transactions = case.transactions.filter(is_active=True).order_by('date')
         daily_interest = case.judgment_amount * (case.interest_rate / 100) / 365
 
         # Create HTML from template
