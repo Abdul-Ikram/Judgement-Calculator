@@ -19,6 +19,7 @@ from .helpers import send_email, generate_unique_phone, get_tokens_for_user, upl
 from .serializers import RegisterSerializer, PasswordResetConfirmSerializer, UserProfileSerializer
 from django.utils import timezone
 from rest_framework.throttling import UserRateThrottle
+from django.core.exceptions import ValidationError as DjangoValidationError
 
 # Create your views here.
 
@@ -37,41 +38,106 @@ class HealthCheckView(APIView):
 class LoginThrottle(UserRateThrottle):
     rate = '5/min'
 
+# class RegisterView(APIView):
+#     permission_classes = [AllowAny]
+
+#     def post(self, request):
+#         # serializer = RegisterSerializer(data=request.data)
+#         serializer = RegisterSerializer(data=request.data, context={
+#             'phone_number': generate_unique_phone()
+#         })
+#         if serializer.is_valid():
+#             try:
+#                 with transaction.atomic():
+#                     user = serializer.save()
+#                     send_email(user, email_type='registration')
+#                 return Response({
+#                     'status_code': 200,
+#                     'message': 'Registration successful. Please check your email to verify your account.',
+#                     'user': {
+#                         'email': user.email, # type: ignore
+#                         'username': user.username, # type: ignore
+#                         'phone_number': user.phone_number, # type: ignore
+#                         'is_verified': user.is_verified, # type: ignore
+#                     }
+#                 }, status=status.HTTP_200_OK)
+
+#             except Exception as error:
+#                 return Response({
+#                     'status_code': 500,
+#                     'message': f'An unexpected error occurred: {str(error)}. Please try again later.',
+#                 }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+#         return Response({
+#             'status_code': 400,
+#             'message': 'Invalid input. Please correct the highlighted errors and try again.',
+#             'errors': serializer.errors
+#         }, status=status.HTTP_400_BAD_REQUEST)
+
 class RegisterView(APIView):
     permission_classes = [AllowAny]
 
     def post(self, request):
-        # serializer = RegisterSerializer(data=request.data)
-        serializer = RegisterSerializer(data=request.data, context={
-            'phone_number': generate_unique_phone()
-        })
-        if serializer.is_valid():
-            try:
-                with transaction.atomic():
-                    user = serializer.save()
-                    send_email(user, email_type='registration')
+        data = request.data
+        username = data.get('username')
+        email = data.get('email')
+        password = data.get('password')
+
+        # Field presence validation
+        if not username or not email or not password:
+            return Response({
+                'status_code': 400,
+                'message': "All fields (username, email, password) are required."
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        # Email format validation
+        try:
+            validate_email(email)
+        except DjangoValidationError:
+            return Response({
+                'status_code': 400,
+                'message': "Invalid email format. Please enter a valid email address."
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        # Check if email already exists
+        if User.objects.filter(email=email).exists():
+            return Response({
+                'status_code': 400,
+                'message': "User with this email already exists."
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            with transaction.atomic():
+                phone_number = generate_unique_phone()
+
+                user = User(
+                    username=username,
+                    email=email,
+                    phone_number=phone_number,
+                )
+                user.set_password(password)
+                user.save()
+
+                send_email(user, email_type='registration')
+
                 return Response({
                     'status_code': 200,
                     'message': 'Registration successful. Please check your email to verify your account.',
                     'user': {
-                        'email': user.email, # type: ignore
-                        'username': user.username, # type: ignore
-                        'phone_number': user.phone_number, # type: ignore
-                        'is_verified': user.is_verified, # type: ignore
+                        'email': user.email,
+                        'username': user.username,
+                        'phone_number': user.phone_number,
+                        'is_verified': user.is_verified,
                     }
                 }, status=status.HTTP_200_OK)
 
-            except Exception as error:
-                return Response({
-                    'status_code': 500,
-                    'message': f'An unexpected error occurred: {str(error)}. Please try again later.',
-                }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        except Exception as error:
+            return Response({
+                'status_code': 500,
+                'message': f'Internal Server error'
+                # 'message': f'An unexpected error occurred: {str(error)}. Please try again later.'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-        return Response({
-            'status_code': 400,
-            'message': 'Invalid input. Please correct the highlighted errors and try again.',
-            'errors': serializer.errors
-        }, status=status.HTTP_400_BAD_REQUEST)
 
 class VerifyEmailView(APIView):
     """
