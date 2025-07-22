@@ -1,80 +1,136 @@
 <!DOCTYPE html>
-<html>
-
+<html lang="en">
 <head>
-    <meta charset="utf-8">
+    <meta charset="UTF-8">
     <title>Payoff Statement</title>
     <style>
         body {
             font-family: "DejaVu Sans", sans-serif;
+            margin: 50px;
+            color: #333;
+            background-color: #fff;
         }
 
-        h2 {
-            margin-bottom: 0;
+        .header {
+            text-align: center;
+            border-bottom: 2px solid #004080;
+            padding-bottom: 10px;
+            margin-bottom: 30px;
         }
 
-        .meta {
-            margin-bottom: 20px;
+        .header h1 {
+            color: #004080;
+            font-size: 26px;
+            margin: 0;
+        }
+
+        .top-info {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 40px;
+            font-size: 13px;
+        }
+
+        .lawyer-info,
+        .recipient-info {
+            width: 48%;
+            line-height: 1.6;
+        }
+
+        .section-title {
+            font-size: 18px;
+            color: #004080;
+            margin: 40px 0 10px 0;
+            text-align: center;
+            text-transform: uppercase;
+            border-top: 1px solid #ccc;
+            padding-top: 10px;
+        }
+
+        .case-info {
+            text-align: center;
             font-size: 14px;
+            margin-bottom: 30px;
         }
 
-        table {
-            width: 100%;
-            border-collapse: collapse;
+        .payoff-box {
+            width: 280px;
+            margin: 0 auto;
+            border: 2px solid #004080;
+            padding: 15px;
+            font-size: 16px;
+            font-weight: bold;
+            color: #004080;
+            background-color: #f1f7ff;
+            text-align: center;
+        }
+
+        .info-text {
+            text-align: center;
             margin-top: 20px;
+            font-size: 13px;
         }
 
-        th,
-        td {
-            padding: 8px;
-            border: 1px solid #000;
-            text-align: left;
+        .footer {
             font-size: 12px;
+            margin-top: 50px;
+            line-height: 1.6;
+        }
+
+        .footer p {
+            margin-bottom: 10px;
         }
     </style>
 </head>
-
 <body>
-    <p>{{ lawyer.name }}<br>
-        {{ lawyer.firm }}<br>
-        {{ lawyer.address }}<br>
-        {{ lawyer.city_state_zip }}<br>
-        Telephone: {{ lawyer.phone }}<br>
-        Email: {{ lawyer.email }}<br>
-        <br>
-        {{ lawyer.date }}
-    </p>
 
-    <h2>PAYOFF STATEMENT</h2>
-    <div class="meta">
-        <strong>{{ case.case_name }}</strong><br>
-        {{ case.court_name }} Case No. {{ case.court_case_number }}<br>
-        <strong>Judgment Amount:</strong> ${{ case.judgment_amount }} entered {{ case.judgment_date }}
+    <div class="header">
+        <h1>Payoff Statement</h1>
     </div>
 
-    <table>
-        <thead>
-            <tr>
-                <th>Date</th>
-                <th>Payment/Cost</th>
-                <th>Accrued Interest</th>
-                <th>Judgment Balance</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for t in transactions %}
-            <tr>
-                <td>{{ t.date }}</td>
-                <td>${{ t.amount }}</td>
-                <td>${{ t.accrued_interest }}</td>
-                <td>${{ t.principal_balance }}</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+    <div class="top-info">
+        <div class="lawyer-info">
+            <p><strong>{{ lawyer.name }}</strong><br>
+            {{ lawyer.firm }}<br>
+            {{ lawyer.address }}<br>
+            {{ lawyer.city_state_zip }}<br>
+            Tel: {{ lawyer.phone }}<br>
+            Email: {{ lawyer.email }}</p>
+        </div>
 
-    <br><br>
-    Interest accrues at a daily rate of ${{ daily_interest }} per day after {{ interest_start_date }}.
+        <div class="recipient-info">
+            <p><strong>To:</strong><br>
+            Mr. Frank Jones<br>
+            16101 Ventura Boulevard, Suite 250<br>
+            Encino, California 91436<br>
+            <br>
+            <strong>Date:</strong> {{ lawyer.date }}</p>
+        </div>
+    </div>
+
+    <div class="section-title">Case Details</div>
+
+    <div class="case-info">
+        <p><strong>{{ case.case_name }}</strong></p>
+        <p>{{ case.court_name }} - Case No. {{ case.court_case_number }}</p>
+        <p><strong>Judgment Amount:</strong> ${{ case.judgment_amount }} (entered {{ case.judgment_date }})</p>
+    </div>
+
+    <div class="section-title">Total Payoff</div>
+
+    <div class="payoff-box">
+        ${{ case.payoff_amount }} <br />
+        <span style="font-size: 12px; font-weight: normal;">As of {{ today }}</span>
+    </div>
+
+    <div class="info-text">
+        Interest accrues at a daily rate of <strong>${{ daily_interest }}</strong> per day after <strong>{{ interest_start_date }}</strong>.
+    </div>
+
+    <div class="footer">
+        <p>Please ensure your payment reaches our office by the stated date.</p>
+        <p>If paying by check, mail it to the address listed. For wire instructions, contact our office.</p>
+    </div>
+
 </body>
-
 </html>
