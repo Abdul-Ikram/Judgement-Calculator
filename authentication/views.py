@@ -394,6 +394,44 @@ class PasswordResetConfirmView(APIView):
             "message": "Invalid input. Please check the provided data.",
             "errors": serializer.errors
         }, status=status.HTTP_400_BAD_REQUEST)
+    
+
+class ChangePasswordAPIView(APIView):
+    def post(self, request):
+        current_password = request.data.get('current_password')
+        new_password = request.data.get('new_password')
+
+        # Check if both passwords are provided
+        if not current_password or not new_password:
+            return Response({
+                "status_code": 400,
+                "message": "Both current and new passwords are required."
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        user = request.user
+
+        # Validate current password
+        if not user.check_password(current_password):
+            return Response({
+                "status_code": 400,
+                "message": "Current password is incorrect."
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        # Validate new password (you can add more rules)
+        if len(new_password) < 8:
+            return Response({
+                "status_code": 400,
+                "message": "New password must be at least 8 characters long."
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        # Update password
+        user.set_password(new_password)
+        user.save()
+
+        return Response({
+            "status_code": 200,
+            "message": "Password updated successfully."
+        }, status=status.HTTP_200_OK)
 
 
 class ProfileUpdateView(APIView):
