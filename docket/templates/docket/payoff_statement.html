@@ -100,21 +100,14 @@
                 Email: {{ lawyer.email }}</p>
         </div>
 
+        {% if debtor_info %}
         <div class="recipient-info">
             <p><strong>Debtor Information:</strong><br>
                 {{ debtor_info|linebreaksbr }}<br><br>
                 <strong>Date:</strong> {{ lawyer.date }}
             </p>
         </div>
-
-        <!-- <div class="recipient-info">
-            <p><strong>To:</strong><br>
-            Mr. Frank Jones<br>
-            16101 Ventura Boulevard, Suite 250<br>
-            Encino, California 91436<br>
-            <br>
-            <strong>Date:</strong> {{ lawyer.date }}</p>
-        </div> -->
+        {% endif %}
     </div>
 
     <div class="section-title">Case Details</div>
@@ -128,13 +121,12 @@
     <div class="section-title">Total Payoff</div>
 
     <div class="payoff-box">
-        ${{ case.payoff_amount }} <br />
+        ${{ payoff_amount }} <br />
         <span style="font-size: 12px; font-weight: normal;">As of {{ today }}</span>
     </div>
 
     <div class="info-text">
-        Interest accrues at a daily rate of <strong>${{ daily_interest }}</strong> per day after <strong>{{
-            interest_start_date }}</strong>.
+        Interest accrues at a daily rate of <strong>${{ daily_interest }}</strong> per day after <strong>{{ interest_start_date }}</strong>.
     </div>
 
     <div class="footer">
