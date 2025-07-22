@@ -290,6 +290,67 @@ class UpdateTransactionView(APIView):
         }, status=status.HTTP_400_BAD_REQUEST)
 
 
+# class GeneratePayoffPDFView(APIView):
+#     def get(self, request, case_id):
+#         try:
+#             case = CaseDetails.objects.get(id=case_id, user=request.user)
+#         except CaseDetails.DoesNotExist:
+#             return HttpResponse("Case not found.", status=404)
+
+#         # Optional: Get date from query parameters
+#         date_str = request.GET.get('date')
+#         if date_str:
+#             try:
+#                 end_date = datetime.strptime(date_str, "%Y-%m-%d").date()
+#                 print(end_date)
+#             except ValueError:
+#                 return HttpResponse("Invalid date format. Use YYYY-MM-DD.", status=400)
+#         else:
+#             end_date = now().date()
+
+#         # Filter only active transactions up to the given date
+#         transactions = case.transactions.filter(is_active=True, date__lte=end_date).order_by('date')
+
+#         # Calculate daily interest
+#         daily_interest = case.judgment_amount * (case.interest_rate / 100) / Decimal('365')
+#         days_since_judgment = (end_date - case.judgment_date).days
+#         accrued_interest = Decimal(str(round(daily_interest * days_since_judgment, 2)))
+
+#         # Calculate payoff
+#         payoff_amount = case.judgment_amount + accrued_interest - case.total_payments
+
+#         # Render HTML to string
+#         html_string = render_to_string('docket/payoff_statement.html', {
+#             'case': case,
+#             'transactions': transactions,
+#             'daily_interest': f"{daily_interest:.2f}",
+#             'interest_start_date': end_date,
+#             'today': end_date,
+#             'payoff_amount': f"{payoff_amount:.2f}",
+#             'accrued_interest': f"{accrued_interest:.2f}",
+#             'lawyer': {
+#                 'name': 'John A. Smith, Esq.',
+#                 'firm': 'Smith Jones & Kaplan LLP',
+#                 'address': '201 South Figueroa Street 15th Floor',
+#                 'city_state_zip': 'Los Angeles California 90012',
+#                 'phone': '(213) 555-5200',
+#                 'email': 'jsmith@sjkllp.law',
+#                 'date': now().strftime('%B %d, %Y')
+#             }
+#         })
+
+#         # Generate PDF
+#         pdf_file = BytesIO()
+#         pisa_status = pisa.CreatePDF(src=html_string, dest=pdf_file)
+
+#         if pisa_status.err:
+#             return HttpResponse('Failed to generate PDF', status=500)
+
+#         pdf_file.seek(0)
+#         response = HttpResponse(pdf_file, content_type='application/pdf')
+#         response['Content-Disposition'] = f'attachment; filename=payoff_statement_case_{case_id}.pdf'
+#         return response
+
 class GeneratePayoffPDFView(APIView):
     def get(self, request, case_id):
         try:
@@ -302,7 +363,6 @@ class GeneratePayoffPDFView(APIView):
         if date_str:
             try:
                 end_date = datetime.strptime(date_str, "%Y-%m-%d").date()
-                print(end_date)
             except ValueError:
                 return HttpResponse("Invalid date format. Use YYYY-MM-DD.", status=400)
         else:
@@ -314,29 +374,34 @@ class GeneratePayoffPDFView(APIView):
         # Calculate daily interest
         daily_interest = case.judgment_amount * (case.interest_rate / 100) / Decimal('365')
         days_since_judgment = (end_date - case.judgment_date).days
-        accrued_interest = Decimal(str(round(daily_interest * days_since_judgment, 2)))
+        accrued_interest = round(daily_interest * days_since_judgment, 2)
 
         # Calculate payoff
         payoff_amount = case.judgment_amount + accrued_interest - case.total_payments
 
-        # Render HTML to string
+        # Build lawyer info from the logged-in user
+        user = request.user
+        lawyer_info = {
+            'name': user.full_name or f"{user.first_name} {user.last_name}",
+            'firm': user.company or "Law Firm",
+            'address': user.location or "N/A",
+            'city_state_zip': f"{user.state or ''}, {user.country or ''} {user.postal_code or ''}".strip(', '),
+            'phone': user.phone_number or "N/A",
+            'email': user.email,
+            'date': now().strftime('%B %d, %Y')
+        }
+
+        # Render HTML from template
         html_string = render_to_string('docket/payoff_statement.html', {
             'case': case,
+            'debtor_info': case.debtor_info,
             'transactions': transactions,
             'daily_interest': f"{daily_interest:.2f}",
             'interest_start_date': end_date,
             'today': end_date,
             'payoff_amount': f"{payoff_amount:.2f}",
             'accrued_interest': f"{accrued_interest:.2f}",
-            'lawyer': {
-                'name': 'John A. Smith, Esq.',
-                'firm': 'Smith Jones & Kaplan LLP',
-                'address': '201 South Figueroa Street 15th Floor',
-                'city_state_zip': 'Los Angeles California 90012',
-                'phone': '(213) 555-5200',
-                'email': 'jsmith@sjkllp.law',
-                'date': now().strftime('%B %d, %Y')
-            }
+            'lawyer': lawyer_info,
         })
 
         # Generate PDF
@@ -351,7 +416,6 @@ class GeneratePayoffPDFView(APIView):
         response['Content-Disposition'] = f'attachment; filename=payoff_statement_case_{case_id}.pdf'
         return response
 
-    
 
 class DeleteCaseView(APIView):
     def delete(self, request, case_id):
