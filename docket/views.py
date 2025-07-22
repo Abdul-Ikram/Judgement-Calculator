@@ -297,17 +297,37 @@ class GeneratePayoffPDFView(APIView):
         except CaseDetails.DoesNotExist:
             return HttpResponse("Case not found.", status=404)
 
-        # transactions = case.transactions.all().order_by('date')
-        transactions = case.transactions.filter(is_active=True).order_by('date')
-        daily_interest = case.judgment_amount * (case.interest_rate / 100) / 365
+        # Optional: Get date from query parameters
+        date_str = request.GET.get('date')
+        if date_str:
+            try:
+                end_date = datetime.strptime(date_str, "%Y-%m-%d").date()
+                print(end_date)
+            except ValueError:
+                return HttpResponse("Invalid date format. Use YYYY-MM-DD.", status=400)
+        else:
+            end_date = now().date()
 
-        # Create HTML from template
+        # Filter only active transactions up to the given date
+        transactions = case.transactions.filter(is_active=True, date__lte=end_date).order_by('date')
+
+        # Calculate daily interest
+        daily_interest = case.judgment_amount * (case.interest_rate / 100) / Decimal('365')
+        days_since_judgment = (end_date - case.judgment_date).days
+        accrued_interest = Decimal(str(round(daily_interest * days_since_judgment, 2)))
+
+        # Calculate payoff
+        payoff_amount = case.judgment_amount + accrued_interest - case.total_payments
+
+        # Render HTML to string
         html_string = render_to_string('docket/payoff_statement.html', {
             'case': case,
             'transactions': transactions,
             'daily_interest': f"{daily_interest:.2f}",
-            'interest_start_date': now().date(),
-            'today': now().date(),
+            'interest_start_date': end_date,
+            'today': end_date,
+            'payoff_amount': f"{payoff_amount:.2f}",
+            'accrued_interest': f"{accrued_interest:.2f}",
             'lawyer': {
                 'name': 'John A. Smith, Esq.',
                 'firm': 'Smith Jones & Kaplan LLP',
@@ -319,7 +339,7 @@ class GeneratePayoffPDFView(APIView):
             }
         })
 
-        # Convert HTML to PDF
+        # Generate PDF
         pdf_file = BytesIO()
         pisa_status = pisa.CreatePDF(src=html_string, dest=pdf_file)
 
@@ -330,6 +350,7 @@ class GeneratePayoffPDFView(APIView):
         response = HttpResponse(pdf_file, content_type='application/pdf')
         response['Content-Disposition'] = f'attachment; filename=payoff_statement_case_{case_id}.pdf'
         return response
+
     
 
 class DeleteCaseView(APIView):
