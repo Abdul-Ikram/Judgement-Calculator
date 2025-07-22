@@ -17,6 +17,7 @@ from django.shortcuts import get_object_or_404
 from xhtml2pdf import pisa
 from io import BytesIO
 from django.template.loader import get_template
+from datetime import datetime
 
 
 class AddCaseView(APIView):
@@ -355,19 +356,60 @@ class DeleteCaseView(APIView):
         }, status=status.HTTP_200_OK)
 
 
+# class DownloadCaseTransactionsPDF(APIView):
+#     def get(self, request, case_id):
+#         try:
+#             case = CaseDetails.objects.get(id=case_id, user=request.user)
+#             transactions = case.transactions.filter(is_active=True).order_by('date')
+#             # transactions = case.transactions.all().order_by('date')
+
+#             template_path = 'docket/case_transactions.html'
+#             context = {
+#                 'case': case,
+#                 'transactions': transactions
+#             }
+
+#             template = get_template(template_path)
+#             html = template.render(context)
+
+#             response = HttpResponse(content_type='application/pdf')
+#             response['Content-Disposition'] = f'attachment; filename=case_{case_id}_transactions.pdf'
+
+#             pisa_status = pisa.CreatePDF(html, dest=response)
+
+#             if pisa_status.err:
+#                 return HttpResponse('We had some errors generating the PDF', status=500)
+#             return response
+
+#         except CaseDetails.DoesNotExist:
+#             return HttpResponse("Case not found", status=404)
+
 class DownloadCaseTransactionsPDF(APIView):
     def get(self, request, case_id):
         try:
+            # Get the case for the authenticated user
             case = CaseDetails.objects.get(id=case_id, user=request.user)
-            transactions = case.transactions.filter(is_active=True).order_by('date')
-            # transactions = case.transactions.all().order_by('date')
 
+            # Get optional end date from query params (e.g., ?end_date=2025-07-21)
+            end_date_str = request.query_params.get('end_date')
+            try:
+                if end_date_str:
+                    end_date = datetime.strptime(end_date_str, "%Y-%m-%d").date()
+                    transactions = case.transactions.filter(is_active=True, date__lte=end_date).order_by('date')
+                else:
+                    transactions = case.transactions.filter(is_active=True).order_by('date')
+            except ValueError:
+                return HttpResponse("Invalid date format. Use YYYY-MM-DD.", status=400)
+
+            # Prepare the template and context
             template_path = 'docket/case_transactions.html'
             context = {
                 'case': case,
-                'transactions': transactions
+                'transactions': transactions,
+                'today': datetime.now().date()
             }
 
+            # Render HTML and generate PDF
             template = get_template(template_path)
             html = template.render(context)
 
@@ -375,9 +417,9 @@ class DownloadCaseTransactionsPDF(APIView):
             response['Content-Disposition'] = f'attachment; filename=case_{case_id}_transactions.pdf'
 
             pisa_status = pisa.CreatePDF(html, dest=response)
-
             if pisa_status.err:
                 return HttpResponse('We had some errors generating the PDF', status=500)
+
             return response
 
         except CaseDetails.DoesNotExist:
