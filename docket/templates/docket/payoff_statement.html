@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <title>Payoff Statement</title>
@@ -82,6 +83,7 @@
         }
     </style>
 </head>
+
 <body>
 
     <div class="header">
@@ -91,21 +93,28 @@
     <div class="top-info">
         <div class="lawyer-info">
             <p><strong>{{ lawyer.name }}</strong><br>
-            {{ lawyer.firm }}<br>
-            {{ lawyer.address }}<br>
-            {{ lawyer.city_state_zip }}<br>
-            Tel: {{ lawyer.phone }}<br>
-            Email: {{ lawyer.email }}</p>
+                {{ lawyer.firm }}<br>
+                {{ lawyer.address }}<br>
+                {{ lawyer.city_state_zip }}<br>
+                Tel: {{ lawyer.phone }}<br>
+                Email: {{ lawyer.email }}</p>
         </div>
 
         <div class="recipient-info">
+            <p><strong>Debtor Information:</strong><br>
+                {{ debtor_info|linebreaksbr }}<br><br>
+                <strong>Date:</strong> {{ lawyer.date }}
+            </p>
+        </div>
+
+        <!-- <div class="recipient-info">
             <p><strong>To:</strong><br>
             Mr. Frank Jones<br>
             16101 Ventura Boulevard, Suite 250<br>
             Encino, California 91436<br>
             <br>
             <strong>Date:</strong> {{ lawyer.date }}</p>
-        </div>
+        </div> -->
     </div>
 
     <div class="section-title">Case Details</div>
@@ -124,7 +133,8 @@
     </div>
 
     <div class="info-text">
-        Interest accrues at a daily rate of <strong>${{ daily_interest }}</strong> per day after <strong>{{ interest_start_date }}</strong>.
+        Interest accrues at a daily rate of <strong>${{ daily_interest }}</strong> per day after <strong>{{
+            interest_start_date }}</strong>.
     </div>
 
     <div class="footer">
@@ -133,4 +143,5 @@
     </div>
 
 </body>
+
 </html>
