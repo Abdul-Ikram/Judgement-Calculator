@@ -188,7 +188,7 @@ For business inquiries, legal tech projects, or freelance collaboration, feel fr
 
 ## 🛡️ License ![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)
 
-This project is licensed under the [MIT License](https://github.com/Abdul-Ikram/Judgement-Calculator/tree/main/LICENSE).
+This project is licensed under the [MIT License](https://github.com/Abdul-Ikram/Judgement-Calculator/blob/ikram_dev/LICENSE).
 
 ----------
 
