@@ -7,14 +7,14 @@ class CaseCreateSerializer(serializers.ModelSerializer):
     caseName = serializers.CharField()
     courtName = serializers.CharField()
     courtCaseNumber = serializers.CharField()
-    judgmentAmount = serializers.DecimalField(max_digits=12, decimal_places=2)
+    judgmentAmount = serializers.DecimalField(max_digits=12, decimal_places=4)
     judgmentDate = serializers.DateField()
     lastPaymentDate = serializers.DateField(required=False)
-    totalPayments = serializers.DecimalField(max_digits=12, decimal_places=2)
-    accruedInterest = serializers.DecimalField(max_digits=12, decimal_places=2)
-    principalBalance = serializers.DecimalField(max_digits=12, decimal_places=2)
-    payoffAmount = serializers.DecimalField(max_digits=12, decimal_places=2)
-    interestRate = serializers.DecimalField(max_digits=5, decimal_places=2)
+    totalPayments = serializers.DecimalField(max_digits=12, decimal_places=4)
+    accruedInterest = serializers.DecimalField(max_digits=12, decimal_places=4)
+    principalBalance = serializers.DecimalField(max_digits=12, decimal_places=4)
+    payoffAmount = serializers.DecimalField(max_digits=12, decimal_places=4)
+    interestRate = serializers.DecimalField(max_digits=5, decimal_places=4)
     isEnded = serializers.BooleanField(required=False)
     debtorInfo = serializers.CharField(required=False, allow_blank=True)
 
@@ -45,7 +45,7 @@ class CaseListSerializer(serializers.ModelSerializer):
     caseName = serializers.CharField(source='case_name')
     courtName = serializers.CharField(source='court_name')
     courtCaseNumber = serializers.CharField(source='court_case_number')
-    payoffAmount = serializers.DecimalField(source='payoff_amount', max_digits=12, decimal_places=2)
+    payoffAmount = serializers.DecimalField(source='payoff_amount', max_digits=12, decimal_places=4)
 
     class Meta:
         model = CaseDetails
@@ -55,13 +55,13 @@ class CaseDetailSerializer(serializers.ModelSerializer):
     caseName = serializers.CharField(source='case_name')
     courtName = serializers.CharField(source='court_name')
     courtCaseNumber = serializers.CharField(source='court_case_number')
-    judgmentAmount = serializers.DecimalField(source='judgment_amount', max_digits=12, decimal_places=2)
+    judgmentAmount = serializers.DecimalField(source='judgment_amount', max_digits=12, decimal_places=4)
     judgmentDate = serializers.DateField(source='judgment_date')
     lastPaymentDate = serializers.DateField(source='last_payment_date', allow_null=True)
-    totalPayments = serializers.DecimalField(source='total_payments', max_digits=12, decimal_places=2)
-    accruedInterest = serializers.DecimalField(source='accrued_interest', max_digits=12, decimal_places=2)
+    totalPayments = serializers.DecimalField(source='total_payments', max_digits=12, decimal_places=4)
+    accruedInterest = serializers.DecimalField(source='accrued_interest', max_digits=12, decimal_places=4)
     principalBalance = serializers.SerializerMethodField()
-    payoffAmount = serializers.DecimalField(source='payoff_amount', max_digits=12, decimal_places=2)
+    payoffAmount = serializers.DecimalField(source='payoff_amount', max_digits=12, decimal_places=4)
 
     class Meta:
         model = CaseDetails
@@ -86,10 +86,10 @@ class CaseDetailSerializer(serializers.ModelSerializer):
 class TransactionCreateSerializer(serializers.Serializer):
     case_id = serializers.IntegerField()
     transaction_type = serializers.ChoiceField(choices=['PAYMENT', 'COST'])
-    amount = serializers.DecimalField(max_digits=12, decimal_places=2)
+    amount = serializers.DecimalField(max_digits=12, decimal_places=4)
     date = serializers.DateField()
     description = serializers.CharField(max_length=255, required=False, allow_blank=True)
-    new_balance = serializers.DecimalField(max_digits=12, decimal_places=2)
+    new_balance = serializers.DecimalField(max_digits=12, decimal_places=4)
 
     def validate_case_id(self, value):
         request = self.context.get('request')
@@ -114,8 +114,8 @@ class TransactionCreateSerializer(serializers.Serializer):
 class TransactionDetailSerializer(serializers.ModelSerializer):
     type = serializers.CharField(source='transaction_type')
     interestRate = serializers.SerializerMethodField()
-    calculatedInterest = serializers.DecimalField(source='accrued_interest', max_digits=12, decimal_places=2)
-    newBalance = serializers.DecimalField(source='principal_balance', max_digits=12, decimal_places=2)
+    calculatedInterest = serializers.DecimalField(source='accrued_interest', max_digits=12, decimal_places=4)
+    newBalance = serializers.DecimalField(source='principal_balance', max_digits=12, decimal_places=4)
 
     class Meta:
         model = Transaction
@@ -135,7 +135,7 @@ class TransactionDetailSerializer(serializers.ModelSerializer):
         return float(obj.case.interest_rate)
 
 class TransactionUpdateSerializer(serializers.ModelSerializer):
-    new_balance = serializers.DecimalField(max_digits=12, decimal_places=2)
+    new_balance = serializers.DecimalField(max_digits=12, decimal_places=4)
 
     class Meta:
         model = Transaction
