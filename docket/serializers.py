@@ -2,6 +2,11 @@ from rest_framework import serializers
 from .models import CaseDetails, Transaction
 from decimal import Decimal
 
+class NullableDateField(serializers.DateField):
+    def to_internal_value(self, value):
+        if value in ("", None):
+            return None
+        return super().to_internal_value(value)
 
 class CaseCreateSerializer(serializers.ModelSerializer):
     caseName = serializers.CharField()
@@ -9,7 +14,9 @@ class CaseCreateSerializer(serializers.ModelSerializer):
     courtCaseNumber = serializers.CharField()
     judgmentAmount = serializers.DecimalField(max_digits=12, decimal_places=4)
     judgmentDate = serializers.DateField()
-    lastPaymentDate = serializers.DateField(required=False)
+    # lastPaymentDate = serializers.DateField(required=False)
+    # lastPaymentDate = serializers.DateField(required=False, allow_null=True)
+    lastPaymentDate = NullableDateField(required=False, allow_null=True)
     totalPayments = serializers.DecimalField(max_digits=12, decimal_places=4)
     accruedInterest = serializers.DecimalField(max_digits=12, decimal_places=4)
     principalBalance = serializers.DecimalField(max_digits=12, decimal_places=4)
