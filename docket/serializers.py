@@ -14,7 +14,7 @@ class CaseCreateSerializer(serializers.ModelSerializer):
     accruedInterest = serializers.DecimalField(max_digits=12, decimal_places=4)
     principalBalance = serializers.DecimalField(max_digits=12, decimal_places=4)
     payoffAmount = serializers.DecimalField(max_digits=12, decimal_places=4)
-    interestRate = serializers.DecimalField(max_digits=5, decimal_places=4)
+    interestRate = serializers.DecimalField(max_digits=6, decimal_places=4)
     isEnded = serializers.BooleanField(required=False)
     debtorInfo = serializers.CharField(required=False, allow_blank=True)
 
