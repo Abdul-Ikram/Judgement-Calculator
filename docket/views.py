@@ -42,7 +42,6 @@ class AddCaseView(APIView):
 
             try:
                 with transaction.atomic():
-
                     case = CaseDetails.objects.create(
                         user=user,
                         case_name=data['caseName'],
@@ -165,7 +164,7 @@ class CreateTransactionView(APIView):
                     return Response({
                         'status_code': 201,
                         'message': 'Transaction added successfully.',
-                        'transaction': {
+                        'data': {
                             'transaction_id': tx.id,
                             'case_id': tx.case.id,
                             'transaction_type': tx.transaction_type,
