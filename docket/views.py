@@ -165,7 +165,16 @@ class CreateTransactionView(APIView):
                     return Response({
                         'status_code': 201,
                         'message': 'Transaction added successfully.',
-                        'transaction_id': tx.id
+                        'transaction': {
+                            'transaction_id': tx.id,
+                            'case_id': tx.case.id,
+                            'transaction_type': tx.transaction_type,
+                            'amount': str(tx.amount),
+                            'accrued_interest': str(tx.accrued_interest),
+                            'principal_balance': str(tx.principal_balance),
+                            'date': tx.date,
+                            'description': tx.description
+                        }
                     }, status=status.HTTP_201_CREATED)
 
             except Exception as e:
