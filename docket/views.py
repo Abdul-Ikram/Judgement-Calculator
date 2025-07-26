@@ -91,6 +91,56 @@ class AddCaseView(APIView):
             'errors': serializer.errors
         }, status=status.HTTP_400_BAD_REQUEST)
 
+class EditCaseView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def put(self, request, case_id):
+        try:
+            case = CaseDetails.objects.get(id=case_id, user=request.user, is_active=True)
+        except CaseDetails.DoesNotExist:
+            return Response({
+                "status_code": 404,
+                "message": "Case not found."
+            }, status=status.HTTP_404_NOT_FOUND)
+
+        data = request.data
+
+        # Validate required fields manually
+        required_fields = ['caseName', 'courtName', 'courtCaseNumber', 'judgmentAmount', 'judgmentDate']
+        for field in required_fields:
+            if not data.get(field):
+                return Response({
+                    "status_code": 400,
+                    "message": f"'{field}' is required."
+                }, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            with transaction.atomic():
+                case.case_name = data['caseName']
+                case.court_name = data['courtName']
+                case.court_case_number = data['courtCaseNumber']
+                case.judgment_amount = data['judgmentAmount']
+                case.judgment_date = data['judgmentDate']
+                case.save()
+
+                return Response({
+                    "status_code": 200,
+                    "message": "Case updated successfully.",
+                    "data": {
+                        "case_id": case.id,
+                        "case_name": case.case_name,
+                        "court_name": case.court_name,
+                        "court_case_number": case.court_case_number,
+                        "judgment_amount": str(case.judgment_amount),
+                        "judgment_date": case.judgment_date
+                    }
+                }, status=status.HTTP_200_OK)
+
+        except Exception as e:
+            return Response({
+                "status_code": 500,
+                "message": f"Failed to update case: {str(e)}"
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 class CaseListView(ListAPIView):
     serializer_class   = CaseListSerializer
