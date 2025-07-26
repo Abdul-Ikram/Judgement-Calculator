@@ -6,6 +6,7 @@ urlpatterns = [
     path('cases/', CaseListView.as_view(), name='case_list'),
     path('cases/<int:case_id>/', CaseDetailView.as_view(), name='case-detail'),
     path('transactions/create/', CreateTransactionView.as_view(), name='create_transaction'),
+    path('case/<int:case_id>/edit/', EditCaseView.as_view(), name='edit-case'),
     path('cases/<int:case_id>/transactions/', TransactionListByCaseView.as_view(), name='transactions_by_case'),
     path('transactions/<int:transaction_id>/update/', UpdateTransactionView.as_view(), name='update-transaction'),
     path('cases/<int:case_id>/payoff-statement/', GeneratePayoffPDFView.as_view(), name='generate-payoff-pdf'),
