@@ -65,6 +65,7 @@ class CaseDetailSerializer(serializers.ModelSerializer):
     judgmentAmount = serializers.DecimalField(source='judgment_amount', max_digits=12, decimal_places=4)
     judgmentDate = serializers.DateField(source='judgment_date')
     lastPaymentDate = serializers.DateField(source='last_payment_date', allow_null=True)
+    createdAt = serializers.DateTimeField(source='created_at')
     totalPayments = serializers.DecimalField(source='total_payments', max_digits=12, decimal_places=4)
     accruedInterest = serializers.DecimalField(source='accrued_interest', max_digits=12, decimal_places=4)
     principalBalance = serializers.SerializerMethodField()
@@ -84,6 +85,7 @@ class CaseDetailSerializer(serializers.ModelSerializer):
             'accruedInterest',
             'principalBalance',
             'payoffAmount',
+            'createdAt',
         ]
 
     def get_principalBalance(self, obj):
