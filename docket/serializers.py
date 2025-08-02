@@ -98,7 +98,7 @@ class TransactionCreateSerializer(serializers.Serializer):
     amount = serializers.DecimalField(max_digits=12, decimal_places=4)
     date = serializers.DateField()
     description = serializers.CharField(max_length=255, required=False, allow_blank=True)
-    new_balance = serializers.DecimalField(max_digits=12, decimal_places=4)
+    # new_balance = serializers.DecimalField(max_digits=12, decimal_places=4)
 
     def validate_case_id(self, value):
         request = self.context.get('request')

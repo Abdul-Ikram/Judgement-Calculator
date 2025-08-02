@@ -451,7 +451,6 @@ class ProfileUpdateView(APIView):
                 user.image = upload_to_imagekit(image_file)
             elif request.data.get('image') == '':
                 user.image = None
-                # user.image = user.image
 
             # Update profile fields
             user.full_name = full_name
@@ -484,6 +483,32 @@ class ProfileUpdateView(APIView):
                 'message': f'Error updating profile: {str(e)}'
             }, status=status.HTTP_400_BAD_REQUEST)
         
+class ProfileImageUpdateView(APIView):
+    def put(self, request, *args, **kwargs):
+        user = request.user
+        image_file = request.FILES.get('image', None)
+
+        try:
+            # Image update
+            if image_file:
+                user.image = upload_to_imagekit(image_file)
+            elif request.data.get('image') == '':
+                user.image = None
+            
+            user.save()
+
+            return Response({
+                'success': True,
+                'message': 'Image updated successfully.',
+                'data': {
+                    'image': user.image if user.image else None,
+                }
+            }, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({
+                'success': False,
+                'message': f'Error updating profile picture: {str(e)}'
+            }, status=status.HTTP_400_BAD_REQUEST)
 
 class GetProfileView(APIView):
     def get(self, request):

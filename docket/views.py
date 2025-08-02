@@ -1,9 +1,10 @@
+import logging
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status, permissions
 from django.db import transaction
 from .models import CaseDetails, Transaction
-from decimal import Decimal
+from decimal import ROUND_HALF_UP, Decimal, getcontext
 from django.utils import timezone
 from rest_framework.generics import ListAPIView
 from .serializers import CaseCreateSerializer, CaseListSerializer, TransactionCreateSerializer, TransactionDetailSerializer, TransactionUpdateSerializer, CaseDetailSerializer
@@ -17,7 +18,8 @@ from django.shortcuts import get_object_or_404
 from xhtml2pdf import pisa
 from io import BytesIO
 from django.template.loader import get_template
-from datetime import datetime
+from datetime import date, datetime
+from decimal import Decimal, ROUND_DOWN
 
 
 class AddCaseView(APIView):
@@ -179,6 +181,71 @@ class CaseDetailView(APIView):
         }, status=status.HTTP_200_OK)
 
 
+# class CreateTransactionView(APIView):
+#     permission_classes = [permissions.IsAuthenticated]
+
+#     def post(self, request):
+#         serializer = TransactionCreateSerializer(data=request.data, context={'request': request})
+#         if serializer.is_valid():
+#             data = serializer.validated_data
+#             try:
+#                 with transaction.atomic():
+#                     case = CaseDetails.objects.get(id=data['case_id'], user=request.user, is_active=True)
+
+#                     # Create transaction
+#                     tx = Transaction.objects.create(
+#                         case=case,
+#                         transaction_type=data['transaction_type'],
+#                         amount=data['amount'],
+#                         accrued_interest=case.accrued_interest,
+#                         principal_balance=data['new_balance'],
+#                         date=data['date'],
+#                         description=data.get('description', '')
+#                     )
+
+#                     # Update case payoff
+#                     case.payoff_amount = data['new_balance']
+
+#                     # Update payments if it's a payment
+#                     if data['transaction_type'] == 'PAYMENT':
+#                         case.total_payments += data['amount']
+#                         case.last_payment_date = data['date']
+
+#                     case.save()
+
+#                     return Response({
+#                         'status_code': 201,
+#                         'message': 'Transaction added successfully.',
+#                         'data': {
+#                             'transaction_id': tx.id,
+#                             'case_id': tx.case.id,
+#                             'transaction_type': tx.transaction_type,
+#                             'amount': str(tx.amount),
+#                             'accrued_interest': str(tx.accrued_interest),
+#                             'principal_balance': str(tx.principal_balance),
+#                             'date': tx.date,
+#                             'description': tx.description
+#                         }
+#                     }, status=status.HTTP_201_CREATED)
+
+#             except Exception as e:
+#                 return Response({
+#                     'status_code': 500,
+#                     # 'message': f"An error occurred: {str(e)}"
+#                     'message': f'Internal Server Error'
+#                 }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+#         return Response({
+#             'status_code': 400,
+#             'message': 'Invalid input',
+#             'errors': serializer.errors
+#         }, status=status.HTTP_400_BAD_REQUEST)
+
+getcontext().prec = 28
+
+# Configure logging
+logger = logging.getLogger(__name__)
+
 class CreateTransactionView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
@@ -186,29 +253,88 @@ class CreateTransactionView(APIView):
         serializer = TransactionCreateSerializer(data=request.data, context={'request': request})
         if serializer.is_valid():
             data = serializer.validated_data
+            
             try:
                 with transaction.atomic():
                     case = CaseDetails.objects.get(id=data['case_id'], user=request.user, is_active=True)
 
-                    # Create transaction
+                    new_transaction_date = data['date']
+                    
+                    # Determine the starting balance for this calculation
+                    last_transaction = Transaction.objects.filter(case=case, is_active=True).order_by('date').last()
+                    
+                    # Get the base amount and starting date for interest calculation
+                    if last_transaction:
+                        start_date = last_transaction.date
+                        starting_payoff_amount = last_transaction.principal_balance
+                        starting_accrued_interest = last_transaction.accrued_interest
+                    else:
+                        # This is the very first transaction on the case
+                        start_date = case.judgment_date
+                        starting_payoff_amount = case.judgment_amount
+                        starting_accrued_interest = Decimal('0.0000')
+
+                    # 1. Calculate accrued interest up to the new transaction date
+                    current_accrued_interest = starting_accrued_interest
+                    
+                    if new_transaction_date > start_date:
+                        days_since_last_transaction = (new_transaction_date - start_date).days
+                        
+                        daily_interest_rate = case.interest_rate / Decimal('36500')
+                        interest_to_accrue = starting_payoff_amount * daily_interest_rate * days_since_last_transaction
+                        
+                        current_accrued_interest += interest_to_accrue
+                        
+                    # 2. Process the new transaction based on its type
+                    new_principal_balance = starting_payoff_amount # Use a clearer variable name
+                    
+                    if data['transaction_type'] == 'PAYMENT':
+                        payment_amount = data['amount']
+                        
+                        # a. Apply payment to interest first
+                        if payment_amount >= current_accrued_interest:
+                            remaining_payment = payment_amount - current_accrued_interest
+                            current_accrued_interest = Decimal('0.0000')
+                            
+                            # b. Apply remaining payment to principal
+                            if remaining_payment > new_principal_balance:
+                                return Response({
+                                    'status_code': 400,
+                                    'message': 'Payment amount exceeds the outstanding principal balance.'
+                                }, status=status.HTTP_400_BAD_REQUEST)
+                            
+                            new_principal_balance -= remaining_payment
+                        else:
+                            # Payment only covers a portion of the interest
+                            current_accrued_interest -= payment_amount
+                        
+                        case.total_payments += payment_amount
+                        case.last_payment_date = new_transaction_date
+                    
+                    elif data['transaction_type'] == 'COST':
+                        # Additional costs are added to the principal balance
+                        new_principal_balance += data['amount']
+                    
+                    # Manual interest adjustment type
+                    elif data['transaction_type'] == 'INTEREST':
+                        current_accrued_interest += data['amount']
+
+                    current_payoff_balance = new_principal_balance + current_accrued_interest
+                    
+                    # 3. Create the new transaction record
                     tx = Transaction.objects.create(
                         case=case,
                         transaction_type=data['transaction_type'],
                         amount=data['amount'],
-                        accrued_interest=case.accrued_interest,
-                        principal_balance=data['new_balance'],
-                        date=data['date'],
+                        accrued_interest=current_accrued_interest,
+                        principal_balance=current_payoff_balance,
+                        date=new_transaction_date,
                         description=data.get('description', '')
                     )
 
-                    # Update case payoff
-                    case.payoff_amount = data['new_balance']
-
-                    # Update payments if it's a payment
-                    if data['transaction_type'] == 'PAYMENT':
-                        case.total_payments += data['amount']
-                        case.last_payment_date = data['date']
-
+                    # 4. Update the case details with the final calculated payoff amount
+                    case.payoff_amount = current_payoff_balance
+                    case.accrued_interest = current_accrued_interest
                     case.save()
 
                     return Response({
@@ -226,11 +352,16 @@ class CreateTransactionView(APIView):
                         }
                     }, status=status.HTTP_201_CREATED)
 
+            except CaseDetails.DoesNotExist:
+                return Response({
+                    'status_code': 404,
+                    'message': 'Case not found or not active.'
+                }, status=status.HTTP_404_NOT_FOUND)
             except Exception as e:
+                logger.error("An error occurred during transaction creation.", exc_info=True)
                 return Response({
                     'status_code': 500,
-                    # 'message': f"An error occurred: {str(e)}"
-                    'message': f'Internal Server Error'
+                    'message': f'Internal Server Error: {str(e)}'
                 }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
         return Response({
@@ -239,38 +370,6 @@ class CreateTransactionView(APIView):
             'errors': serializer.errors
         }, status=status.HTTP_400_BAD_REQUEST)
 
-
-# class TransactionListByCaseView(ListAPIView):
-#     serializer_class = TransactionDetailSerializer
-
-#     def get_queryset(self):
-#         case_id = self.kwargs.get('case_id')
-
-#         # Ensure user owns this case
-#         case = CaseDetails.objects.filter(id=case_id, user=self.request.user, is_active=True).first()
-#         if not case:
-#             return Transaction.objects.none()
-
-#         return Transaction.objects.filter(
-#             case__id=case_id,
-#             case__user=self.request.user,
-#             is_active=True
-#         ).order_by('-date')
-
-#     def list(self, request, *args, **kwargs):
-#         queryset = self.get_queryset()
-#         if not queryset.exists():
-#             return Response({
-#                 "status_code": 404,
-#                 "message": "No transactions found or case not accessible."
-#             }, status=status.HTTP_404_NOT_FOUND)
-
-#         serializer = self.get_serializer(queryset, many=True)
-#         return Response({
-#             "status_code": 200,
-#             "message": "Transactions retrieved successfully.",
-#             "transactions": serializer.data
-#         }, status=status.HTTP_200_OK)
 
 class TransactionListByCaseView(ListAPIView):
     serializer_class = TransactionDetailSerializer
