@@ -327,7 +327,7 @@ class CreateTransactionView(APIView):
                         transaction_type=data['transaction_type'],
                         amount=data['amount'],
                         accrued_interest=current_accrued_interest,
-                        principal_balance=new_principal_balance,
+                        principal_balance=current_payoff_balance,
                         date=new_transaction_date,
                         description=data.get('description', '')
                     )
@@ -335,6 +335,7 @@ class CreateTransactionView(APIView):
                     # 4. Update the case details with the final calculated payoff amount
                     case.payoff_amount = current_payoff_balance
                     case.accrued_interest = current_accrued_interest
+                    case.today_payoff = new_principal_balance # added this later
                     case.save()
 
                     return Response({

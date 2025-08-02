@@ -69,7 +69,7 @@ class CaseDetailSerializer(serializers.ModelSerializer):
     totalPayments = serializers.DecimalField(source='total_payments', max_digits=12, decimal_places=4)
     accruedInterest = serializers.DecimalField(source='accrued_interest', max_digits=12, decimal_places=4)
     principalBalance = serializers.SerializerMethodField()
-    payoffAmount = serializers.DecimalField(source='payoff_amount', max_digits=12, decimal_places=4)
+    payoffAmount = serializers.DecimalField(source='today_payoff', max_digits=12, decimal_places=4)
 
     class Meta:
         model = CaseDetails
