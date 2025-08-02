@@ -327,7 +327,7 @@ class CreateTransactionView(APIView):
                         transaction_type=data['transaction_type'],
                         amount=data['amount'],
                         accrued_interest=current_accrued_interest,
-                        principal_balance=current_payoff_balance,
+                        principal_balance=new_principal_balance,
                         date=new_transaction_date,
                         description=data.get('description', '')
                     )

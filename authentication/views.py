@@ -108,12 +108,12 @@ class RegisterView(APIView):
 
         try:
             with transaction.atomic():
-                phone_number = generate_unique_phone()
+                # phone_number = generate_unique_phone()
 
                 user = User(
                     username=username,
                     email=email,
-                    phone_number=phone_number,
+                    # phone_number=phone_number,
                 )
                 user.set_password(password)
                 user.save()
@@ -126,7 +126,7 @@ class RegisterView(APIView):
                     'user': {
                         'email': user.email,
                         'username': user.username,
-                        'phone_number': user.phone_number,
+                        # 'phone_number': user.phone_number,
                         'is_verified': user.is_verified,
                     }
                 }, status=status.HTTP_200_OK)
