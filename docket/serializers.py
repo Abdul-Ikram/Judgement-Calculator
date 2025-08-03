@@ -145,8 +145,13 @@ class TransactionDetailSerializer(serializers.ModelSerializer):
         return float(obj.case.interest_rate)
 
 class TransactionUpdateSerializer(serializers.ModelSerializer):
-    new_balance = serializers.DecimalField(max_digits=12, decimal_places=4)
-
     class Meta:
         model = Transaction
-        fields = ['transaction_type', 'amount', 'date', 'description', 'new_balance']
+        fields = ['transaction_type', 'amount', 'date', 'description']
+        extra_kwargs = {
+            'date': {'required': False},
+            'amount': {'required': False},
+            'transaction_type': {'required': False},
+            'description': {'required': False}
+        }
+
