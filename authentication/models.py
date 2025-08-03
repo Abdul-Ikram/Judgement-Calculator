@@ -55,7 +55,7 @@ class User(AbstractBaseUser):
     password = models.CharField(max_length=255)
     country = models.CharField(max_length=50, null=True, blank=True)
     state = models.CharField(max_length=50, null=True, blank=True)
-    phone_number = models.CharField(max_length=15, null=True, blank=True, unique=True)
+    phone_number = models.CharField(max_length=15, null=True, blank=True)
     postal_code = models.CharField(max_length=50, null=True, blank=True)
     company = models.CharField(max_length=255, null=True, blank=True)
     location = models.TextField(null=True, blank=True)

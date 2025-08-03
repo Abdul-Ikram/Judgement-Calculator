@@ -10,15 +10,15 @@ class CaseDetails(models.Model):
     court_name = models.CharField(max_length=100)
     court_case_number = models.CharField(max_length=50, unique=True)
 
-    judgment_amount = models.DecimalField(max_digits=12, decimal_places=4)
-    interest_rate = models.DecimalField(max_digits=6, decimal_places=4, help_text="Annual interest rate (%)")
+    judgment_amount = models.DecimalField(max_digits=20, decimal_places=10)
+    interest_rate = models.DecimalField(max_digits=10, decimal_places=6, help_text="Annual interest rate (%)")
     judgment_date = models.DateField()
 
     last_payment_date = models.DateField(null=True, blank=True)
-    total_payments = models.DecimalField(max_digits=12, decimal_places=4, default=Decimal('0.00'))
-    accrued_interest = models.DecimalField(max_digits=12, decimal_places=4, default=Decimal('0.00'))
-    payoff_amount = models.DecimalField(max_digits=12, decimal_places=4, default=Decimal('0.00'))
-    today_payoff = models.DecimalField(max_digits=12, decimal_places=4, default=Decimal('0.00'))
+    total_payments = models.DecimalField(max_digits=20, decimal_places=10, default=Decimal('0.00'))
+    accrued_interest = models.DecimalField(max_digits=20, decimal_places=10, default=Decimal('0.00'))
+    payoff_amount = models.DecimalField(max_digits=20, decimal_places=10, default=Decimal('0.00'))
+    today_payoff = models.DecimalField(max_digits=20, decimal_places=10, default=Decimal('0.00'))
     debtor_info = models.TextField(null=True, blank=True)
 
     is_active = models.BooleanField(default=True)
@@ -45,10 +45,10 @@ class Transaction(models.Model):
 
     case = models.ForeignKey(CaseDetails, on_delete=models.CASCADE, related_name='transactions')
     transaction_type = models.CharField(max_length=10, choices=TRANSACTION_TYPE_CHOICES)
-    amount = models.DecimalField(max_digits=12, decimal_places=4)
-    accrued_interest = models.DecimalField(max_digits=12, decimal_places=4, default=Decimal('0.00'))
-    principal_balance = models.DecimalField(max_digits=12, decimal_places=4, default=Decimal('0.00'))
-    show_principal_balance = models.DecimalField(max_digits=12, decimal_places=4, default=Decimal('0.00'))
+    amount = models.DecimalField(max_digits=20, decimal_places=10)
+    accrued_interest = models.DecimalField(max_digits=20, decimal_places=10, default=Decimal('0.00'))
+    principal_balance = models.DecimalField(max_digits=20, decimal_places=10, default=Decimal('0.00'))
+    show_principal_balance = models.DecimalField(max_digits=20, decimal_places=10, default=Decimal('0.00'))
     description = models.TextField(null=True, blank=True)
 
     date = models.DateField(default=timezone.now)

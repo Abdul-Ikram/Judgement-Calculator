@@ -241,7 +241,7 @@ class CaseDetailView(APIView):
 #             'errors': serializer.errors
 #         }, status=status.HTTP_400_BAD_REQUEST)
 
-getcontext().prec = 28
+getcontext().prec = 50
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -260,50 +260,47 @@ class CreateTransactionView(APIView):
 
                     new_transaction_date = data['date']
                     
-                    # Determine the starting balance for this calculation
+                    # Determine the starting point for this calculation based on the last transaction
                     last_transaction = Transaction.objects.filter(case=case, is_active=True).order_by('date').last()
                     
-                    # Get the base amount and starting date for interest calculation
                     if last_transaction:
                         start_date = last_transaction.date
-                        starting_payoff_amount = last_transaction.principal_balance
-                        starting_accrued_interest = last_transaction.accrued_interest
+                        # Use the balances from the last transaction's record for the next calculation
+                        current_principal_balance = last_transaction.principal_balance - last_transaction.accrued_interest
+                        current_accrued_interest = last_transaction.accrued_interest
                     else:
                         # This is the very first transaction on the case
                         start_date = case.judgment_date
-                        starting_payoff_amount = case.judgment_amount
-                        starting_accrued_interest = Decimal('0.0000')
+                        current_principal_balance = case.judgment_amount
+                        current_accrued_interest = Decimal('0.00')
 
-                    # 1. Calculate accrued interest up to the new transaction date
-                    current_accrued_interest = starting_accrued_interest
-                    
+                    # 1. Calculate accrued interest since the last transaction date
                     if new_transaction_date > start_date:
                         days_since_last_transaction = (new_transaction_date - start_date).days
                         
+                        # Use Decimal for high-precision calculations
                         daily_interest_rate = case.interest_rate / Decimal('36500')
-                        interest_to_accrue = starting_payoff_amount * daily_interest_rate * days_since_last_transaction
+                        interest_to_accrue = current_principal_balance * daily_interest_rate * Decimal(str(days_since_last_transaction))
                         
                         current_accrued_interest += interest_to_accrue
                         
                     # 2. Process the new transaction based on its type
-                    new_principal_balance = starting_payoff_amount # Use a clearer variable name
-                    
                     if data['transaction_type'] == 'PAYMENT':
                         payment_amount = data['amount']
                         
                         # a. Apply payment to interest first
                         if payment_amount >= current_accrued_interest:
                             remaining_payment = payment_amount - current_accrued_interest
-                            current_accrued_interest = Decimal('0.0000')
+                            current_accrued_interest = Decimal('0.00')
                             
                             # b. Apply remaining payment to principal
-                            if remaining_payment > new_principal_balance:
+                            if remaining_payment > current_principal_balance:
                                 return Response({
                                     'status_code': 400,
                                     'message': 'Payment amount exceeds the outstanding principal balance.'
                                 }, status=status.HTTP_400_BAD_REQUEST)
                             
-                            new_principal_balance -= remaining_payment
+                            current_principal_balance -= remaining_payment
                         else:
                             # Payment only covers a portion of the interest
                             current_accrued_interest -= payment_amount
@@ -313,30 +310,30 @@ class CreateTransactionView(APIView):
                     
                     elif data['transaction_type'] == 'COST':
                         # Additional costs are added to the principal balance
-                        new_principal_balance += data['amount']
+                        current_principal_balance += data['amount']
                     
-                    # Manual interest adjustment type
                     elif data['transaction_type'] == 'INTEREST':
+                        # Manual interest adjustment
                         current_accrued_interest += data['amount']
 
-                    current_payoff_balance = new_principal_balance + current_accrued_interest
+                    # 3. Calculate the final payoff amount (total of principal and accrued interest)
+                    final_payoff_balance = current_principal_balance + current_accrued_interest
                     
-                    # 3. Create the new transaction record
+                    # 4. Create the new transaction record
                     tx = Transaction.objects.create(
                         case=case,
                         transaction_type=data['transaction_type'],
                         amount=data['amount'],
                         accrued_interest=current_accrued_interest,
-                        principal_balance=current_payoff_balance,
-                        show_principal_balance=new_principal_balance,
+                        principal_balance=final_payoff_balance,
                         date=new_transaction_date,
+                        show_principal_balance=current_principal_balance,
                         description=data.get('description', '')
                     )
 
-                    # 4. Update the case details with the final calculated payoff amount
-                    case.payoff_amount = current_payoff_balance
+                    # 5. Update the case details with the new final balances for future calculations
+                    case.payoff_amount = final_payoff_balance
                     case.accrued_interest = current_accrued_interest
-                    case.today_payoff = new_principal_balance # added this later
                     case.save()
 
                     return Response({
