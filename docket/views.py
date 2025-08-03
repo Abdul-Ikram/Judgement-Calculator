@@ -334,6 +334,7 @@ class CreateTransactionView(APIView):
                     # 5. Update the case details with the new final balances for future calculations
                     case.payoff_amount = final_payoff_balance
                     case.accrued_interest = current_accrued_interest
+                    case.today_payoff = final_payoff_balance
                     case.save()
 
                     return Response({
@@ -545,8 +546,9 @@ class UpdateTransactionView(APIView):
                 if final_transaction:
                     case.payoff_amount = final_transaction.principal_balance
                     case.accrued_interest = final_transaction.accrued_interest
+                    case.today_payoff = starting_principal_balance + current_accrued_interest
                 
-                case.save(update_fields=['payoff_amount', 'accrued_interest', 'total_payments', 'last_payment_date'])
+                case.save(update_fields=['payoff_amount', 'accrued_interest', 'total_payments', 'last_payment_date', 'today_payoff'])
 
                 # Serialize and return the updated transaction object
                 updated_tx = Transaction.objects.get(id=tx.id)
