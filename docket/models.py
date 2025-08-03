@@ -48,6 +48,7 @@ class Transaction(models.Model):
     amount = models.DecimalField(max_digits=12, decimal_places=4)
     accrued_interest = models.DecimalField(max_digits=12, decimal_places=4, default=Decimal('0.00'))
     principal_balance = models.DecimalField(max_digits=12, decimal_places=4, default=Decimal('0.00'))
+    show_principal_balance = models.DecimalField(max_digits=12, decimal_places=4, default=Decimal('0.00'))
     description = models.TextField(null=True, blank=True)
 
     date = models.DateField(default=timezone.now)
