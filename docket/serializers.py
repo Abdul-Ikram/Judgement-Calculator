@@ -124,8 +124,8 @@ class TransactionDetailSerializer(serializers.ModelSerializer):
     type = serializers.CharField(source='transaction_type')
     interestRate = serializers.SerializerMethodField()
     calculatedInterest = serializers.DecimalField(source='accrued_interest', max_digits=12, decimal_places=4)
-    # newBalance = serializers.DecimalField(source='new_principal_balance', max_digits=12, decimal_places=4)
-    newBalance = serializers.DecimalField(source='principal_balance', max_digits=12, decimal_places=4)
+    newBalance = serializers.DecimalField(source='new_principal_balance', max_digits=12, decimal_places=4)
+    # newBalance = serializers.DecimalField(source='principal_balance', max_digits=12, decimal_places=4)
 
     class Meta:
         model = Transaction
