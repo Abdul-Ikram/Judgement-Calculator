@@ -396,6 +396,60 @@ class TransactionListByCaseView(ListAPIView):
             "transactions": serializer.data  # could be empty list []
         }, status=status.HTTP_200_OK)
 
+# class UpdateTransactionView(APIView):
+#     permission_classes = [permissions.IsAuthenticated]
+
+#     def put(self, request, transaction_id):
+#         try:
+#             tx = Transaction.objects.select_related('case').get(id=transaction_id, case__user=request.user)
+#         except Transaction.DoesNotExist:
+#             return Response({
+#                 'status_code': 404,
+#                 'message': 'Transaction not found or access denied.'
+#             }, status=status.HTTP_404_NOT_FOUND)
+
+#         serializer = TransactionUpdateSerializer(data=request.data)
+#         if serializer.is_valid():
+#             data = serializer.validated_data
+
+#             with db_transaction.atomic():
+#                 case = tx.case
+
+#                 # If transaction type is PAYMENT and amount changed, adjust total_payments
+#                 if tx.transaction_type == 'PAYMENT':
+#                     case.total_payments -= tx.amount  # Subtract old
+#                 if data['transaction_type'] == 'PAYMENT':
+#                     case.total_payments += data['amount']  # Add new
+#                     case.last_payment_date = data['date']
+
+#                 # Update case payoff
+#                 case.payoff_amount = data['new_balance']
+#                 case.save()
+
+#                 # Update transaction
+#                 tx.transaction_type = data['transaction_type']
+#                 tx.amount = data['amount']
+#                 tx.date = data['date']
+#                 tx.description = data['description']
+#                 tx.principal_balance = data['new_balance']
+#                 tx.save()
+
+#                 return Response({
+#                     'status_code': 200,
+#                     'message': 'Transaction updated successfully.'
+#                 }, status=status.HTTP_200_OK)
+
+#         return Response({
+#             'status_code': 400,
+#             'message': 'Invalid input.',
+#             'errors': serializer.errors
+#         }, status=status.HTTP_400_BAD_REQUEST)
+
+getcontext().prec = 50
+
+# Configure logging
+logger = logging.getLogger(__name__)
+
 class UpdateTransactionView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
@@ -408,35 +462,108 @@ class UpdateTransactionView(APIView):
                 'message': 'Transaction not found or access denied.'
             }, status=status.HTTP_404_NOT_FOUND)
 
-        serializer = TransactionUpdateSerializer(data=request.data)
+        serializer = TransactionUpdateSerializer(data=request.data, partial=True)
         if serializer.is_valid():
             data = serializer.validated_data
 
             with db_transaction.atomic():
                 case = tx.case
-
-                # If transaction type is PAYMENT and amount changed, adjust total_payments
-                if tx.transaction_type == 'PAYMENT':
-                    case.total_payments -= tx.amount  # Subtract old
-                if data['transaction_type'] == 'PAYMENT':
-                    case.total_payments += data['amount']  # Add new
-                    case.last_payment_date = data['date']
-
-                # Update case payoff
-                case.payoff_amount = data['new_balance']
-                case.save()
-
-                # Update transaction
-                tx.transaction_type = data['transaction_type']
-                tx.amount = data['amount']
-                tx.date = data['date']
-                tx.description = data['description']
-                tx.principal_balance = data['new_balance']
+                
+                # Update the transaction object with new data
+                for field, value in data.items():
+                    setattr(tx, field, value)
                 tx.save()
+
+                # Recalculate balances from the edited transaction onwards
+                
+                # Get all transactions from the edited one's date onwards, sorted by date
+                recalc_transactions = Transaction.objects.filter(case=case, is_active=True, date__gte=tx.date).order_by('date', 'id')
+                
+                # Determine the starting point for the recalculation
+                last_transaction_before_edit = Transaction.objects.filter(
+                    case=case, 
+                    is_active=True, 
+                    date__lt=tx.date
+                ).order_by('date', 'id').last()
+
+                if not last_transaction_before_edit:
+                    # This is the first transaction on the case, so use judgment details
+                    starting_principal_balance = case.judgment_amount
+                    starting_accrued_interest = Decimal('0.00')
+                    start_date = case.judgment_date
+                else:
+                    starting_principal_balance = last_transaction_before_edit.principal_balance - last_transaction_before_edit.accrued_interest
+                    starting_accrued_interest = last_transaction_before_edit.accrued_interest
+                    start_date = last_transaction_before_edit.date
+                
+                # Reset total payments to re-sum them
+                case.total_payments = Decimal('0.00')
+
+                # Iterate through all transactions that need to be recalculated
+                for current_tx in recalc_transactions:
+                    
+                    # 1. Calculate accrued interest since the last transaction
+                    current_accrued_interest = starting_accrued_interest
+                    
+                    if current_tx.date > start_date:
+                        days_since_last_transaction = (current_tx.date - start_date).days
+                        daily_interest_rate = case.interest_rate / Decimal('36500')
+                        interest_to_accrue = starting_principal_balance * daily_interest_rate * Decimal(str(days_since_last_transaction))
+                        current_accrued_interest += interest_to_accrue
+                        
+                    # 2. Process the current transaction's type
+                    if current_tx.transaction_type == 'PAYMENT':
+                        payment_amount = current_tx.amount
+                        if payment_amount >= current_accrued_interest:
+                            remaining_payment = payment_amount - current_accrued_interest
+                            current_accrued_interest = Decimal('0.00')
+                            starting_principal_balance -= remaining_payment
+                        else:
+                            current_accrued_interest -= payment_amount
+                        case.total_payments += payment_amount
+                        case.last_payment_date = current_tx.date
+                    
+                    elif current_tx.transaction_type == 'COST':
+                        starting_principal_balance += current_tx.amount
+                    
+                    elif current_tx.transaction_type == 'INTEREST':
+                        current_accrued_interest += current_tx.amount
+
+                    # 3. Calculate final balances and update the transaction record
+                    current_tx.accrued_interest = current_accrued_interest
+                    current_tx.principal_balance = starting_principal_balance + current_accrued_interest
+                    current_tx.save(update_fields=['accrued_interest', 'principal_balance'])
+
+                    # 4. Prepare for the next iteration
+                    starting_principal_balance = starting_principal_balance
+                    starting_accrued_interest = current_accrued_interest
+                    start_date = current_tx.date
+
+                # 5. Update the CaseDetails model with the final balances
+                final_transaction = recalc_transactions.last()
+                if final_transaction:
+                    case.payoff_amount = final_transaction.principal_balance
+                    case.accrued_interest = final_transaction.accrued_interest
+                
+                case.save(update_fields=['payoff_amount', 'accrued_interest', 'total_payments', 'last_payment_date'])
+
+                # Serialize and return the updated transaction object
+                updated_tx = Transaction.objects.get(id=tx.id)
+                response_data = {
+                    'transaction_id': updated_tx.id,
+                    'case_id': updated_tx.case.id,
+                    'transaction_type': updated_tx.transaction_type,
+                    'amount': str(updated_tx.amount),
+                    'accrued_interest': str(updated_tx.accrued_interest),
+                    'principal_balance': str(updated_tx.principal_balance),
+                    'date': updated_tx.date,
+                    'description': updated_tx.description
+                }
 
                 return Response({
                     'status_code': 200,
-                    'message': 'Transaction updated successfully.'
+                    'message': 'Transaction and subsequent balances updated successfully.',
+                    'data': response_data
                 }, status=status.HTTP_200_OK)
 
         return Response({
@@ -444,7 +571,6 @@ class UpdateTransactionView(APIView):
             'message': 'Invalid input.',
             'errors': serializer.errors
         }, status=status.HTTP_400_BAD_REQUEST)
-
 
 # class GeneratePayoffPDFView(APIView):
 #     def get(self, request, case_id):
