@@ -532,7 +532,8 @@ class UpdateTransactionView(APIView):
                     # 3. Calculate final balances and update the transaction record
                     current_tx.accrued_interest = current_accrued_interest
                     current_tx.principal_balance = starting_principal_balance + current_accrued_interest
-                    current_tx.save(update_fields=['accrued_interest', 'principal_balance'])
+                    current_tx.show_principal_balance = starting_principal_balance
+                    current_tx.save(update_fields=['accrued_interest', 'principal_balance', 'show_principal_balance'])
 
                     # 4. Prepare for the next iteration
                     starting_principal_balance = starting_principal_balance
