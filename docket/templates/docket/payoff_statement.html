@@ -115,18 +115,18 @@
     <div class="case-info">
         <p><strong>{{ case.case_name }}</strong></p>
         <p>{{ case.court_name }} - Case No. {{ case.court_case_number }}</p>
-        <p><strong>Judgment Amount:</strong> ${{ case.judgment_amount }} (entered {{ case.judgment_date }})</p>
+        <p><strong>Judgment Amount:</strong> ${{ case.judgment_amount|floatformat:"2" }} (entered {{ case.judgment_date }})</p>
     </div>
 
     <div class="section-title">Total Payoff</div>
 
     <div class="payoff-box">
-        ${{ payoff_amount }} <br />
+        ${{ payoff_amount|floatformat:"2" }} <br />
         <span style="font-size: 12px; font-weight: normal;">As of {{ today }}</span>
     </div>
 
     <div class="info-text">
-        Interest accrues at a daily rate of <strong>${{ daily_interest }}</strong> per day after <strong>{{ interest_start_date }}</strong>.
+        Interest accrues at a daily rate of <strong>${{ daily_interest|floatformat:"2" }}</strong> per day after <strong>{{ interest_start_date }}</strong>.
     </div>
 
     <div class="footer">

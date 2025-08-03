@@ -40,7 +40,7 @@
         }
 
         th, td {
-            padding: 10px;
+            padding: 3px;
             border: 1px solid #aaa;
             text-align: center;
         }
@@ -99,9 +99,9 @@
                 <tr>
                     <td>{{ txn.date }}</td>
                     <td>{{ txn.transaction_type }}</td>
-                    <td>${{ txn.amount }}</td>
-                    <td>${{ txn.accrued_interest }}</td>
-                    <td>${{ txn.principal_balance }}</td>
+                    <td>${{ txn.amount|floatformat:"2" }}</td>
+                    <td>${{ txn.accrued_interest|floatformat:"2" }}</td>
+                    <td>${{ txn.principal_balance|floatformat:"2" }}</td>
                     <td>{{ txn.description }}</td>
                 </tr>
             {% empty %}
