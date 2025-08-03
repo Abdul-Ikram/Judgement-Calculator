@@ -318,6 +318,12 @@ class CreateTransactionView(APIView):
 
                     # 3. Calculate the final payoff amount (total of principal and accrued interest)
                     final_payoff_balance = current_principal_balance + current_accrued_interest
+
+                    if Transaction.objects.filter(case=case, date=new_transaction_date, is_active=True).exists():
+                        return Response({
+                            'status_code': 400,
+                            'message': f'A transaction already exists for this case on {new_transaction_date}. Only one transaction is allowed per day.'
+                        }, status=status.HTTP_400_BAD_REQUEST)
                     
                     # 4. Create the new transaction record
                     tx = Transaction.objects.create(
@@ -466,6 +472,13 @@ class UpdateTransactionView(APIView):
         serializer = TransactionUpdateSerializer(data=request.data, partial=True)
         if serializer.is_valid():
             data = serializer.validated_data
+
+            updated_date = data.get('date', tx.date)  # Use updated date if provided, else keep existing
+            if Transaction.objects.filter(case=tx.case, date=updated_date, is_active=True).exclude(id=tx.id).exists():
+                return Response({
+                    'status_code': 400,
+                    'message': f'Another transaction already exists for this case on {updated_date}. Only one transaction is allowed per day.'
+                }, status=status.HTTP_400_BAD_REQUEST)
 
             with db_transaction.atomic():
                 case = tx.case
