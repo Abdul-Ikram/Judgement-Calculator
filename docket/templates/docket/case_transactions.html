@@ -39,8 +39,14 @@
             margin-top: 10px;
         }
 
-        th, td {
-            padding: 3px;
+        th {
+            padding-top: 5px;
+            border: 1px solid #aaa;
+            text-align: center;
+        }
+
+        td {
+            padding-top: 2px;
             border: 1px solid #aaa;
             text-align: center;
         }
@@ -79,7 +85,7 @@
     <div class="case-info">
         <p><strong>Case:</strong> {{ case.case_name }}</p>
         <p><strong>Court Case Number:</strong> {{ case.court_case_number }}</p>
-        <p><strong>Judgment Amount:</strong> ${{ case.judgment_amount }}</p>
+        <p><strong>Judgment Amount:</strong> ${{ case.judgment_amount|floatformat:"2" }}</p>
         <p><strong>Judgment Date:</strong> {{ case.judgment_date }}</p>
     </div>
 
@@ -91,18 +97,18 @@
                 <th>Amount</th>
                 <th>Accrued Interest</th>
                 <th>Principal Balance</th>
-                <th>Description</th>
+                <!-- <th>Description</th> -->
             </tr>
         </thead>
         <tbody>
             {% for txn in transactions %}
                 <tr>
-                    <td>{{ txn.date }}</td>
+                    <td>{{ txn.date|date:"m-d,Y" }}</td>
                     <td>{{ txn.transaction_type }}</td>
                     <td>${{ txn.amount|floatformat:"2" }}</td>
                     <td>${{ txn.accrued_interest|floatformat:"2" }}</td>
                     <td>${{ txn.principal_balance|floatformat:"2" }}</td>
-                    <td>{{ txn.description }}</td>
+                    <!-- <td>{{ txn.description }}</td> -->
                 </tr>
             {% empty %}
                 <tr>
