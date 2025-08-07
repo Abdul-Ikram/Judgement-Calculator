@@ -48,6 +48,7 @@ INSTALLED_APPS = [
     'authentication',
     'docket',
     'corsheaders',
+    'finance',
 ]
 
 CORS_ALLOWED_ORIGINS = [
@@ -180,3 +181,7 @@ SIMPLE_JWT = {
     'BLACKLIST_AFTER_ROTATION': True,
     'AUTH_TOKEN_CLASSES': ('rest_framework_simplejwt.tokens.AccessToken',),
 }
+
+STRIPE_SECRET_KEY = os.getenv("STRIPE_SECRET_KEY")
+STRIPE_WEBHOOK_SECRET = os.getenv("STRIPE_WEBHOOK_SECRET")
+BASE_URL = os.getenv("BASE_URL")
