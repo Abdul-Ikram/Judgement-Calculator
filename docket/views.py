@@ -895,6 +895,7 @@ class GeneratePayoffPDFView(APIView):
             'city_state_zip': f"{user.state or ''}, {user.country or ''} {user.postal_code or ''}".strip(', '),
             'phone': user.phone_number or "N/A",
             'email': user.email,
+            'image': user.image,
             'date': now().strftime('%B %d, %Y')
         }
 
