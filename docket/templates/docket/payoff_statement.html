@@ -28,11 +28,24 @@
         .top-info {
             display: flex;
             justify-content: space-between;
-            margin-bottom: 40px;
+            align-items: flex-start;
+            margin-bottom: 30px;
             font-size: 13px;
         }
 
-        .lawyer-info,
+        .lawyer-info {
+            flex: 1;
+            margin-right: 20px;
+        }
+
+        .logo-side img {
+            height: 100px;
+            width: auto;
+            border-radius: 4px;
+            object-fit: contain;
+        }
+
+        /* .lawyer-info, */
         .recipient-info {
             width: 48%;
             line-height: 1.6;
@@ -90,43 +103,57 @@
         <h1>Payoff Statement</h1>
     </div>
 
-    <div class="top-info">
-        <div class="lawyer-info">
-            <p><strong>{{ lawyer.name }}</strong><br>
-                {{ lawyer.firm }}<br>
-                {{ lawyer.address }}<br>
-                {{ lawyer.city_state_zip }}<br>
-                Tel: {{ lawyer.phone }}<br>
-                Email: {{ lawyer.email }}</p>
-        </div>
+    <table width="100%" cellspacing="0" cellpadding="0" style="margin-bottom: 30px;">
+        <tr>
+            <td style="width: 65%; font-size: 13px; vertical-align: top;">
+                <p><strong>{{ lawyer.name }}</strong><br>
+                    {{ lawyer.firm }}<br>
+                    {{ lawyer.address }}<br>
+                    {{ lawyer.city_state_zip }}<br>
+                    Tel: {{ lawyer.phone }}<br>
+                    Email: {{ lawyer.email }}</p>
 
-        {% if debtor_info %}
-        <div class="recipient-info">
-            <p><strong>Debtor Information:</strong><br>
-                {{ debtor_info|linebreaksbr }}<br><br>
-                <strong>Date:</strong> {{ lawyer.date }}
-            </p>
-        </div>
-        {% endif %}
-    </div>
+                {% if debtor_info %}
+                <p><strong>Debtor Information:</strong><br>
+                    {{ debtor_info|linebreaksbr }}<br>
+                    <strong>Phone:</strong> {{ lawyer.debtor_phone }}<br>
+                    <strong>Email:</strong> {{ lawyer.debtor_email }}<br>
+                    <strong>Date:</strong> {{ lawyer.date }}
+                </p>
+                {% endif %}
+            </td>
+            <td style="width: 35%; text-align: right; vertical-align: top;">
+                <img src="{{ lawyer.image }}" alt="Lawyer Logo"
+                    style="width: 120px; height: auto; border-radius: 4px;" />
+            </td>
+        </tr>
+    </table>
 
     <div class="section-title">Case Details</div>
 
     <div class="case-info">
         <p><strong>{{ case.case_name }}</strong></p>
         <p>{{ case.court_name }} - Case No. {{ case.court_case_number }}</p>
-        <p><strong>Judgment Amount:</strong> ${{ case.judgment_amount|floatformat:"2" }} (entered {{ case.judgment_date }})</p>
+        <p><strong>Judgment Amount:</strong> ${{ case.judgment_amount|floatformat:"2" }} (entered {{ case.judgment_date
+            }})</p>
     </div>
 
     <div class="section-title">Total Payoff</div>
 
-    <div class="payoff-box">
-        ${{ payoff_amount|floatformat:"2" }} <br />
-        <span style="font-size: 12px; font-weight: normal;">As of {{ today }}</span>
-    </div>
+    <table align="center" cellspacing="0" cellpadding="0" border="0">
+        <tr>
+            <td width="200"
+                style="border: 2px solid #004080; background-color: #f1f7ff; padding: 5px 0px 0px opx ; font-size: 16px; font-weight: bold; color: #004080; text-align: center;">
+                ${{ payoff_amount|floatformat:"2" }}<br />
+                <span style="font-size: 12px; font-weight: normal;">As of {{ today }}</span>
+            </td>
+        </tr>
+    </table>
+
 
     <div class="info-text">
-        Interest accrues at a daily rate of <strong>${{ daily_interest|floatformat:"2" }}</strong> per day after <strong>{{ interest_start_date }}</strong>.
+        Interest accrues at a daily rate of <strong>${{ daily_interest|floatformat:"2" }}</strong> per day after
+        <strong>{{ interest_start_date }}</strong>.
     </div>
 
     <div class="footer">
