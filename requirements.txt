@@ -33,6 +33,7 @@ reportlab==4.4.2
 requests==2.32.4
 six==1.17.0
 sqlparse==0.5.3
+stripe==12.4.0
 svglib==1.5.1
 tinycss2==1.4.0
 tinyhtml5==2.0.0
