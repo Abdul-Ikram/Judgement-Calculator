@@ -31,6 +31,14 @@ class AddCaseView(APIView):
             user = request.user
             data = serializer.validated_data
 
+            if user.payment_status == 'free':
+                active_case_count = CaseDetails.objects.filter(user=user, is_active=True).count()
+                if active_case_count >= 3:
+                    return Response({
+                        "status_code": 403,
+                        "message": "Free plan users can only have up to 3 active cases. Please upgrade your plan to add more."
+                    }, status=status.HTTP_403_FORBIDDEN)
+
             if CaseDetails.objects.filter(
                 user=user,
                 case_name=data['caseName'],
