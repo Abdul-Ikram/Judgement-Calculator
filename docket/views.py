@@ -84,6 +84,11 @@ class AddCaseView(APIView):
                         'message': 'Case created successfully.',
                         'data': {
                             'case_id': case.id,
+                            'case_name': case.case_name,
+                            'court_name': case.court_name,
+                            'court_case_number': case.court_case_number,
+                            'judgment_amount': case.judgment_amount,
+                            'judgment_date': case.judgment_date,
                             'grand_total_amount': str(case.payoff_amount)
                         }
                     }, status=status.HTTP_201_CREATED)
