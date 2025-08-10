@@ -63,6 +63,7 @@ class AddCaseView(APIView):
                         total_payments=data['totalPayments'],
                         accrued_interest=data['accruedInterest'],
                         payoff_amount=data['payoffAmount'],
+                        today_payoff=data['payoffAmount'],
                         debtor_info=data.get('debtorInfo', ''),
                         last_payment_date=data.get('lastPaymentDate'),
                         is_ended=data.get('isEnded', False)
