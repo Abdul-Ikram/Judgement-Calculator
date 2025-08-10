@@ -194,7 +194,8 @@ class CreateCheckoutSessionView(APIView):
                     "interval": interval,
                     "price": price
                 },
-                success_url=settings.BASE_URL + "/stripe/api/success/?session_id={CHECKOUT_SESSION_ID}",
+                # success_url=settings.BASE_URL + "/stripe/api/success/?session_id={CHECKOUT_SESSION_ID}",
+                success_url = "https://calcjuris.vercel.app/home?session_id={CHECKOUT_SESSION_ID}",
                 cancel_url=settings.BASE_URL + "/cancel/",
                 customer_email=email,
             )
