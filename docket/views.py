@@ -625,8 +625,6 @@ class CreateTransactionView(APIView):
                         current_accrued_interest += data['amount']
                     
                     # 3. Apply the custom rounding logic to the principal balance
-                    # This is the key step to match the web app's behavior
-                    # The accrued interest is not rounded as it's a running sum
                     rounded_principal_balance = apply_custom_rounding(current_principal_balance)
 
                     # 4. Calculate the final payoff amount for the transaction date
@@ -656,7 +654,6 @@ class CreateTransactionView(APIView):
                     if today > new_transaction_date:
                         days_since_last_transaction = (today - new_transaction_date).days
                         daily_interest_rate = case.interest_rate / Decimal('36500')
-                        # Use the rounded principal balance for today's interest calculation
                         interest_after_tx = rounded_principal_balance * daily_interest_rate * Decimal(str(days_since_last_transaction))
                         today_payoff = final_payoff_balance + interest_after_tx
                     else:
