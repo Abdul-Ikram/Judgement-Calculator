@@ -552,7 +552,7 @@ def apply_custom_rounding(value):
         return value.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
     else:
         # If 3rd and 4th digits are < 50, truncate to 2 decimal places
-        return (value * 100).to_integral_value(rounding= 'ROUND_DOWN') / 100
+        return (value * 100).to_integral_value(rounding='ROUND_DOWN') / 100
 
 class CreateTransactionView(APIView):
     permission_classes = [permissions.IsAuthenticated]
@@ -582,15 +582,16 @@ class CreateTransactionView(APIView):
                         current_principal_balance = case.judgment_amount
                         current_accrued_interest = Decimal('0.00')
 
-                    # 1. Calculate accrued interest since the last transaction date
+                    # 1. Calculate and round newly-accrued interest
                     if new_transaction_date > start_date:
                         days_since_last_transaction = (new_transaction_date - start_date).days
                         
-                        # Use Decimal for high-precision calculations
                         daily_interest_rate = case.interest_rate / Decimal('36500')
                         interest_to_accrue = current_principal_balance * daily_interest_rate * Decimal(str(days_since_last_transaction))
                         
-                        current_accrued_interest += interest_to_accrue
+                        # Apply custom rounding immediately after calculation
+                        rounded_interest_to_accrue = apply_custom_rounding(interest_to_accrue)
+                        current_accrued_interest += rounded_interest_to_accrue
                         
                     # 2. Process the new transaction based on its type
                     if data['transaction_type'] == 'PAYMENT':
@@ -601,14 +602,16 @@ class CreateTransactionView(APIView):
                             remaining_payment = payment_amount - current_accrued_interest
                             current_accrued_interest = Decimal('0.00')
                             
-                            # b. Apply remaining payment to principal
-                            if remaining_payment > current_principal_balance:
+                            # b. Apply remaining payment to principal after custom rounding
+                            rounded_remaining_payment = apply_custom_rounding(remaining_payment)
+                            
+                            if rounded_remaining_payment > current_principal_balance:
                                 return Response({
                                     'status_code': 400,
                                     'message': 'Payment amount exceeds the outstanding principal balance.'
                                 }, status=status.HTTP_400_BAD_REQUEST)
                             
-                            current_principal_balance -= remaining_payment
+                            current_principal_balance -= rounded_remaining_payment
                         else:
                             # Payment only covers a portion of the interest
                             current_accrued_interest -= payment_amount
