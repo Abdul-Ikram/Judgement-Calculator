@@ -52,7 +52,7 @@ class CaseListSerializer(serializers.ModelSerializer):
     caseName = serializers.CharField(source='case_name')
     courtName = serializers.CharField(source='court_name')
     courtCaseNumber = serializers.CharField(source='court_case_number')
-    payoffAmount = serializers.DecimalField(source='payoff_amount', max_digits=12, decimal_places=4)
+    payoffAmount = serializers.DecimalField(source='payoff_amount', max_digits=20, decimal_places=10)
 
     class Meta:
         model = CaseDetails
