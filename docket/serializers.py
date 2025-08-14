@@ -62,14 +62,14 @@ class CaseDetailSerializer(serializers.ModelSerializer):
     caseName = serializers.CharField(source='case_name')
     courtName = serializers.CharField(source='court_name')
     courtCaseNumber = serializers.CharField(source='court_case_number')
-    judgmentAmount = serializers.DecimalField(source='judgment_amount', max_digits=12, decimal_places=4)
+    judgmentAmount = serializers.DecimalField(source='judgment_amount', max_digits=20, decimal_places=10)
     judgmentDate = serializers.DateField(source='judgment_date')
     lastPaymentDate = serializers.DateField(source='last_payment_date', allow_null=True)
     createdAt = serializers.DateTimeField(source='created_at')
-    totalPayments = serializers.DecimalField(source='total_payments', max_digits=12, decimal_places=4)
-    accruedInterest = serializers.DecimalField(source='accrued_interest', max_digits=12, decimal_places=4)
+    totalPayments = serializers.DecimalField(source='total_payments', max_digits=20, decimal_places=10)
+    accruedInterest = serializers.DecimalField(source='accrued_interest', max_digits=20, decimal_places=10)
     principalBalance = serializers.SerializerMethodField()
-    payoffAmount = serializers.DecimalField(source='today_payoff', max_digits=12, decimal_places=4)
+    payoffAmount = serializers.DecimalField(source='today_payoff', max_digits=20, decimal_places=10)
 
     class Meta:
         model = CaseDetails
@@ -123,8 +123,8 @@ class TransactionCreateSerializer(serializers.Serializer):
 class TransactionDetailSerializer(serializers.ModelSerializer):
     type = serializers.CharField(source='transaction_type')
     interestRate = serializers.SerializerMethodField()
-    calculatedInterest = serializers.DecimalField(source='accrued_interest', max_digits=12, decimal_places=4)
-    newBalance = serializers.DecimalField(source='show_principal_balance', max_digits=12, decimal_places=4)
+    calculatedInterest = serializers.DecimalField(source='accrued_interest', max_digits=20, decimal_places=10)
+    newBalance = serializers.DecimalField(source='show_principal_balance', max_digits=20, decimal_places=10)
     # newBalance = serializers.DecimalField(source='principal_balance', max_digits=12, decimal_places=4)
 
     class Meta:
