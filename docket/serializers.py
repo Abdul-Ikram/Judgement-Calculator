@@ -12,7 +12,7 @@ class CaseCreateSerializer(serializers.ModelSerializer):
     caseName = serializers.CharField()
     courtName = serializers.CharField()
     courtCaseNumber = serializers.CharField()
-    judgmentAmount = serializers.DecimalField(max_digits=12, decimal_places=4)
+    judgmentAmount = serializers.DecimalField(max_digits=20, decimal_places=10)
     judgmentDate = serializers.DateField()
     # lastPaymentDate = serializers.DateField(required=False)
     # lastPaymentDate = serializers.DateField(required=False, allow_null=True)
